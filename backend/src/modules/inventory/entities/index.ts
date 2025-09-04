@@ -4,3 +4,8 @@ export { Item } from './item.entity';
 export { StockMovement } from './stock-movement.entity';
 export { Batch } from './batch.entity';
 export { Serial } from './serial.entity';
+export { ProductVariant } from './product-variant.entity';
+export { Barcode } from './barcode.entity';
+export { Workstation } from './workstation.entity';
+export { ManufacturingOrder } from './manufacturing-order.entity';
+export { BillOfMaterial, BOMComponent, BOMOperation } from './bill-of-material.entity';

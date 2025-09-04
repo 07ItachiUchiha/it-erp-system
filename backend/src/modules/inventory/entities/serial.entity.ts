@@ -1,5 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Item } from './item.entity';
+import { Batch } from './batch.entity';
 
 @Entity('serials')
 export class Serial {
@@ -9,9 +10,23 @@ export class Serial {
   @Column({ length: 50, unique: true })
   serialNumber: string;
 
+  @Column('uuid')
+  itemId: string;
+
+  @ManyToOne(() => Item, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'itemId' })
+  item: Item;
+
+  @Column('uuid', { nullable: true })
+  batchId: string;
+
+  @ManyToOne(() => Batch, batch => batch.serials, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'batchId' })
+  batch: Batch;
+
   @Column({
     type: 'enum',
-    enum: ['available', 'sold', 'damaged', 'returned', 'under_repair'],
+    enum: ['available', 'reserved', 'sold', 'damaged', 'returned', 'under_repair', 'scrapped'],
     default: 'available'
   })
   status: string;
@@ -20,32 +35,59 @@ export class Serial {
   manufacturingDate: Date;
 
   @Column({ type: 'date', nullable: true })
+  receivedDate: Date;
+
+  @Column({ type: 'date', nullable: true })
   warrantyExpiry: Date;
 
   @Column({ length: 100, nullable: true })
-  vendor: string;
+  supplier: string;
 
   @Column({ length: 50, nullable: true })
-  batchNumber: string;
+  purchaseOrderNumber: string;
 
   @Column('decimal', { precision: 10, scale: 2 })
   purchaseCost: number;
 
-  @Column({ type: 'text', nullable: true })
-  notes: string;
+  @Column({ length: 100, nullable: true })
+  warehouseLocation: string;
 
   @Column({ type: 'uuid', nullable: true })
-  soldToCustomer: string;
+  customerId: string; // Customer who purchased this serial
 
   @Column({ type: 'date', nullable: true })
   soldDate: Date;
 
-  @ManyToOne(() => Item, item => item.serials)
-  @JoinColumn({ name: 'item_id' })
-  item: Item;
+  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  soldPrice: number;
 
-  @Column({ name: 'item_id' })
-  itemId: string;
+  @Column({ length: 50, nullable: true })
+  salesOrderNumber: string;
+
+  @Column({ length: 50, nullable: true })
+  invoiceNumber: string;
+
+  @Column({
+    type: 'enum',
+    enum: ['passed', 'failed', 'pending', 'not_required'],
+    default: 'not_required'
+  })
+  qualityStatus: string;
+
+  @Column({ type: 'text', nullable: true })
+  qualityNotes: string;
+
+  @Column({ type: 'text', nullable: true })
+  notes: string;
+
+  @Column({ type: 'json', nullable: true })
+  serviceHistory: Record<string, any>[]; // Service and repair history
+
+  @Column({ type: 'json', nullable: true })
+  additionalAttributes: Record<string, any>; // Custom attributes
+
+  @Column({ default: true })
+  isActive: boolean;
 
   @CreateDateColumn()
   createdAt: Date;

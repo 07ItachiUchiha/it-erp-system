@@ -2,6 +2,10 @@ import { Entity, Column, PrimaryGeneratedColumn, OneToMany, CreateDateColumn, Up
 import { StockMovement } from './stock-movement.entity';
 import { Batch } from './batch.entity';
 import { Serial } from './serial.entity';
+import { ProductVariant } from './product-variant.entity';
+import { Barcode } from './barcode.entity';
+import { BillOfMaterial } from './bill-of-material.entity';
+import { ManufacturingOrder } from './manufacturing-order.entity';
 
 @Entity('items')
 export class Item {
@@ -54,6 +58,30 @@ export class Item {
   @Column({ default: false })
   isSerialTracked: boolean;
 
+  @Column({ default: false })
+  hasVariants: boolean;
+
+  @Column({ default: false })
+  canBeManufactured: boolean;
+
+  @Column({ default: false })
+  canBePurchased: boolean;
+
+  @Column({ default: false })
+  canBeSold: boolean;
+
+  @Column({ length: 500, nullable: true })
+  imageUrl: string;
+
+  @Column({ type: 'json', nullable: true })
+  images: string[]; // Multiple images
+
+  @Column('decimal', { precision: 8, scale: 3, nullable: true })
+  weight: number; // in kg
+
+  @Column({ length: 50, nullable: true })
+  dimensions: string; // e.g., "10x20x30 cm"
+
   @Column({ default: true })
   isActive: boolean;
 
@@ -74,6 +102,18 @@ export class Item {
 
   @OneToMany(() => Serial, serial => serial.item)
   serials: Serial[];
+
+  @OneToMany(() => ProductVariant, variant => variant.parentItem)
+  variants: ProductVariant[];
+
+  @OneToMany(() => Barcode, barcode => barcode.item)
+  barcodes: Barcode[];
+
+  @OneToMany(() => BillOfMaterial, bom => bom.product)
+  billOfMaterials: BillOfMaterial[];
+
+  @OneToMany(() => ManufacturingOrder, mo => mo.product)
+  manufacturingOrders: ManufacturingOrder[];
 
   @CreateDateColumn()
   createdAt: Date;
