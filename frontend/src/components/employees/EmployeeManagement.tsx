@@ -12,6 +12,7 @@ import EmployeeTable from './EmployeeTable';
 import EmployeeForm from './EmployeeForm';
 import EmployeeFilters from './EmployeeFilters';
 import EmployeeDetailsModal from './EmployeeDetailsModal';
+import EmployeeHRSummary from './EmployeeHRSummary';
 import DeleteConfirmModal from '../common/DeleteConfirmModal';
 import BulkActionsModal from '../common/BulkActionsModal';
 import { 
@@ -37,9 +38,11 @@ const EmployeeManagement: React.FC = () => {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isBulkActionsOpen, setIsBulkActionsOpen] = useState(false);
+  const [isHRSummaryOpen, setIsHRSummaryOpen] = useState(false);
   const [employeeToEdit, setEmployeeToEdit] = useState<Employee | null>(null);
   const [employeeToView, setEmployeeToView] = useState<Employee | null>(null);
   const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
+  const [employeeForHR, setEmployeeForHR] = useState<Employee | null>(null);
 
   // Filters and pagination
   const [filters, setFilters] = useState<EmployeeSearchFilters>({
@@ -208,6 +211,11 @@ const EmployeeManagement: React.FC = () => {
     setIsDetailsModalOpen(true);
   };
 
+  const openHRSummaryModal = (employee: Employee) => {
+    setEmployeeForHR(employee);
+    setIsHRSummaryOpen(true);
+  };
+
   const openDeleteModal = (employee: Employee) => {
     setEmployeeToDelete(employee);
     setIsDeleteModalOpen(true);
@@ -353,6 +361,7 @@ const EmployeeManagement: React.FC = () => {
         onEdit={openEditModal}
         onDelete={openDeleteModal}
         onView={openViewModal}
+        onViewHR={openHRSummaryModal}
         loading={loading}
       />
 
@@ -467,6 +476,18 @@ const EmployeeManagement: React.FC = () => {
         onBulkDelete={handleBulkDelete}
         onBulkStatusUpdate={handleBulkStatusUpdate}
       />
+
+      {/* HR Summary Modal */}
+      {employeeForHR && (
+        <EmployeeHRSummary
+          employee={employeeForHR}
+          isOpen={isHRSummaryOpen}
+          onClose={() => {
+            setIsHRSummaryOpen(false);
+            setEmployeeForHR(null);
+          }}
+        />
+      )}
     </div>
   );
 };

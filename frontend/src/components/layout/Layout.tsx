@@ -18,7 +18,8 @@ import {
   LogOut,
   TrendingUp,
   Bell,
-  Briefcase
+  Briefcase,
+  UserCheck
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -49,6 +50,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       icon: Users,
       current: router.pathname === '/employees',
       resource: 'employees',
+      action: 'read'
+    },
+    { 
+      name: 'HR', 
+      href: '/hr', 
+      icon: UserCheck,
+      current: router.pathname === '/hr',
+      resource: 'hr',
       action: 'read'
     },
     { 
@@ -170,6 +179,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <h1 className="text-xl font-semibold text-gray-900">
                   {router.pathname === '/' && 'Dashboard'}
                   {router.pathname === '/employees' && 'Employee Management'}
+                  {router.pathname === '/hr' && 'Human Resources'}
                   {router.pathname === '/users' && 'User Management'}
                   {router.pathname === '/finance' && 'Finance Management'}
                   {router.pathname === '/sales' && 'Sales Management'}

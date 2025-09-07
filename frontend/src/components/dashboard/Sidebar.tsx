@@ -20,7 +20,8 @@ import {
   TrendingUp,
   Briefcase,
   ShoppingCart,
-  Bell
+  Bell,
+  UserCheck
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -30,7 +31,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
   const router = useRouter();
-  const [expandedMenus, setExpandedMenus] = useState<string[]>(['inventory']);
+  const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
 
   const toggleMenu = (menuId: string) => {
     setExpandedMenus(prev =>
@@ -52,6 +53,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
       label: 'Employees',
       href: '/employees',
       icon: Users,
+    },
+    {
+      id: 'hr',
+      label: 'HR',
+      href: '/hr',
+      icon: UserCheck,
     },
     {
       id: 'users',
@@ -79,52 +86,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
     },
     {
       id: 'inventory',
-      label: 'Inventory Management',
+      label: 'Inventory',
+      href: '/inventory',
       icon: Package,
-      submenu: [
-        {
-          id: 'basic-inventory',
-          label: 'Basic Inventory',
-          href: '/inventory',
-          icon: Package,
-        },
-        {
-          id: 'advanced-inventory',
-          label: 'Advanced Inventory',
-          href: '/advanced-inventory',
-          icon: Factory,
-        },
-        {
-          id: 'barcodes',
-          label: 'Barcodes',
-          href: '/advanced-inventory#barcodes',
-          icon: QrCode,
-        },
-        {
-          id: 'variants',
-          label: 'Product Variants',
-          href: '/advanced-inventory#variants',
-          icon: Layers,
-        },
-        {
-          id: 'manufacturing',
-          label: 'Manufacturing Orders',
-          href: '/advanced-inventory#manufacturing',
-          icon: Factory,
-        },
-        {
-          id: 'workstations',
-          label: 'Workstations',
-          href: '/advanced-inventory#workstations',
-          icon: Monitor,
-        },
-        {
-          id: 'batches',
-          label: 'Batches & Serials',
-          href: '/advanced-inventory#batches',
-          icon: Hash,
-        },
-      ],
     },
     {
       id: 'procurement',

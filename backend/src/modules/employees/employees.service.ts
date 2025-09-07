@@ -1,10 +1,12 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, FindManyOptions, ILike } from 'typeorm';
 import { Employee, EmployeeStatus, EmploymentType, Department, Designation } from './entities/employee.entity';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { getDesignationsByDepartment, formatDesignationLabel, formatDepartmentLabel } from './utils/department-designation-mapping';
+import { UsersService } from '../users/users.service';
+import { UserRole } from '../users/entities/user.entity';
 
 export interface EmployeeSearchFilters {
   search?: string;
@@ -47,6 +49,8 @@ export class EmployeesService {
   constructor(
     @InjectRepository(Employee)
     private readonly employeeRepository: Repository<Employee>,
+    @Inject(forwardRef(() => UsersService))
+    private readonly usersService: UsersService,
   ) {}
 
   async create(createEmployeeDto: CreateEmployeeDto): Promise<Employee> {
@@ -67,13 +71,67 @@ export class EmployeesService {
       }
     }
 
+    // Check if user with this email already exists
+    const existingUser = await this.usersService.findByEmail(createEmployeeDto.email);
+    
+    let user = existingUser;
+    
+    // If no user exists, create one with default password
+    if (!existingUser) {
+      const defaultPassword = 'employee123'; // You can make this configurable
+      const userRole = this.mapDesignationToRole(createEmployeeDto.designation);
+      
+      user = await this.usersService.create({
+        email: createEmployeeDto.email,
+        password: defaultPassword,
+        firstName: createEmployeeDto.firstName,
+        lastName: createEmployeeDto.lastName,
+        role: userRole,
+        phone: createEmployeeDto.phone,
+        department: createEmployeeDto.department as any,
+        designation: createEmployeeDto.designation as any,
+      });
+    }
+
     const employee = this.employeeRepository.create({
       ...createEmployeeDto,
+      userId: user.id,
       status: createEmployeeDto.status || EmployeeStatus.ACTIVE,
       employmentType: createEmployeeDto.employmentType || EmploymentType.FULL_TIME,
     });
 
     return await this.employeeRepository.save(employee);
+  }
+
+  private mapDesignationToRole(designation: Designation): UserRole {
+    // Map employee designations to user roles
+    switch (designation) {
+      case Designation.CEO:
+      case Designation.CTO:
+      case Designation.CFO:
+      case Designation.DIRECTOR:
+        return UserRole.ADMIN;
+      case Designation.HR_MANAGER:
+      case Designation.HR_EXECUTIVE:
+      case Designation.RECRUITER:
+        return UserRole.HR;
+      case Designation.MANAGER:
+      case Designation.ASSISTANT_MANAGER:
+      case Designation.FINANCE_MANAGER:
+      case Designation.SALES_MANAGER:
+      case Designation.MARKETING_MANAGER:
+      case Designation.OPERATIONS_MANAGER:
+      case Designation.CUSTOMER_SERVICE_MANAGER:
+        return UserRole.MANAGER;
+      case Designation.ACCOUNTANT:
+      case Designation.ACCOUNTS_EXECUTIVE:
+        return UserRole.FINANCE;
+      case Designation.SALES_EXECUTIVE:
+      case Designation.BUSINESS_DEVELOPMENT_EXECUTIVE:
+        return UserRole.SALES;
+      default:
+        return UserRole.EMPLOYEE;
+    }
   }
 
   async findAll(canViewSalary: boolean = true): Promise<Employee[]> {
@@ -109,19 +167,19 @@ export class EmployeesService {
     // Search functionality
     if (search) {
       queryBuilder.where(
-        '(employee.firstName ILIKE :search OR employee.lastName ILIKE :search OR employee.empId ILIKE :search OR employee.email ILIKE :search OR employee.phone ILIKE :search OR employee.designation ILIKE :search OR employee.department ILIKE :search)',
+        '(employee.firstName ILIKE :search OR employee.lastName ILIKE :search OR employee.empId ILIKE :search OR employee.email ILIKE :search OR employee.phone ILIKE :search)',
         { search: `%${search}%` }
       );
     }
 
     // Filter by department
     if (department && department !== 'all') {
-      queryBuilder.andWhere('employee.department ILIKE :department', { department: `%${department}%` });
+      queryBuilder.andWhere('employee.department = :department', { department });
     }
 
     // Filter by designation
     if (designation && designation !== 'all') {
-      queryBuilder.andWhere('employee.designation ILIKE :designation', { designation: `%${designation}%` });
+      queryBuilder.andWhere('employee.designation = :designation', { designation });
     }
 
     // Filter by status
@@ -376,5 +434,28 @@ export class EmployeesService {
       min: parseFloat(result.min) || 0,
       max: parseFloat(result.max) || 0,
     };
+  }
+
+  async createEmployeeFromUser(user: any): Promise<Employee> {
+    // Create employee record directly for existing user
+    // Provide default designation if user doesn't have one
+    const defaultDesignation = user.designation || Designation.EXECUTIVE;
+    
+    const employee = this.employeeRepository.create({
+      firstName: user.firstName || 'N/A',
+      lastName: user.lastName || 'N/A', 
+      email: user.email,
+      department: user.department,
+      designation: defaultDesignation,
+      userId: user.id,
+      joiningDate: new Date().toISOString().split('T')[0], // Format as YYYY-MM-DD
+      empId: `EMP${Date.now()}${Math.floor(Math.random() * 1000)}`,
+      status: EmployeeStatus.ACTIVE,
+      employmentType: EmploymentType.FULL_TIME,
+      phone: user.phone || '',
+      salary: 0, // Default salary, can be updated later
+    });
+
+    return await this.employeeRepository.save(employee);
   }
 }

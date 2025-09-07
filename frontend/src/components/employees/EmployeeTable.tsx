@@ -9,7 +9,8 @@ import {
   PhoneIcon,
   BuildingOfficeIcon,
   CurrencyDollarIcon,
-  CalendarIcon
+  CalendarIcon,
+  ChartBarIcon
 } from '@heroicons/react/24/outline';
 
 interface EmployeeTableProps {
@@ -20,6 +21,7 @@ interface EmployeeTableProps {
   onEdit: (employee: Employee) => void;
   onDelete: (employee: Employee) => void;
   onView: (employee: Employee) => void;
+  onViewHR?: (employee: Employee) => void;
   loading?: boolean;
 }
 
@@ -59,6 +61,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
   onEdit,
   onDelete,
   onView,
+  onViewHR,
   loading = false,
 }) => {
   const [sortField, setSortField] = useState<keyof Employee>('firstName');
@@ -284,6 +287,15 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                     >
                       <EyeIcon className="w-4 h-4" />
                     </button>
+                    {onViewHR && (
+                      <button
+                        onClick={() => onViewHR(employee)}
+                        className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                        title="View HR Summary"
+                      >
+                        <ChartBarIcon className="w-4 h-4" />
+                      </button>
+                    )}
                     <button
                       onClick={() => onEdit(employee)}
                       className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"

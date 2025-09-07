@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index, OneToOne, JoinColumn } from 'typeorm';
 
 export enum EmployeeStatus {
   ACTIVE = 'active',
@@ -176,6 +176,14 @@ export class Employee {
 
   @Column('text', { nullable: true })
   notes?: string;
+
+  // Relations
+  @Column({ nullable: true })
+  userId?: string;
+
+  @OneToOne('User', 'employee', { nullable: true })
+  @JoinColumn({ name: 'userId' })
+  user?: any;
 
   @CreateDateColumn()
   createdAt: Date;

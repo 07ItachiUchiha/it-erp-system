@@ -13,6 +13,7 @@ import { SalesModule } from './modules/sales/sales.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ProjectsModule } from './modules/projects/projects.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { HrModule } from './modules/hr/hr.module';
 import { AppController } from './app.controller';
 import { databaseConfig } from './database/database.config';
 
@@ -45,6 +46,7 @@ import { databaseConfig } from './database/database.config';
     NotificationsModule,
     ProjectsModule,
     AdminModule,
+    HrModule,
   ],
   controllers: [AppController],
   providers: [],

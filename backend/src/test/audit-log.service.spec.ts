@@ -15,15 +15,17 @@ describe('AuditLogService', () => {
     create: jest.fn(),
     save: jest.fn(),
     findOne: jest.fn(),
-    createQueryBuilder: jest.fn(() => ({
-      leftJoinAndSelect: jest.fn().mockReturnThis(),
-      andWhere: jest.fn().mockReturnThis(),
-      orderBy: jest.fn().mockReturnThis(),
-      take: jest.fn().mockReturnThis(),
-      skip: jest.fn().mockReturnThis(),
-      getMany: jest.fn(),
-      getManyAndCount: jest.fn(),
-    })),
+    createQueryBuilder: jest.fn(),
+  };
+
+  const mockQueryBuilder = {
+    leftJoinAndSelect: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    orderBy: jest.fn().mockReturnThis(),
+    take: jest.fn().mockReturnThis(),
+    skip: jest.fn().mockReturnThis(),
+    getMany: jest.fn(),
+    getManyAndCount: jest.fn(),
   };
 
   const mockUserRepository = {
@@ -48,6 +50,13 @@ describe('AuditLogService', () => {
     service = module.get<AuditLogService>(AuditLogService);
     auditLogRepository = module.get<Repository<AuditLog>>(getRepositoryToken(AuditLog));
     userRepository = module.get<Repository<User>>(getRepositoryToken(User));
+
+    // Setup the query builder mock to return the mockQueryBuilder
+    mockAuditLogRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
@@ -132,8 +141,7 @@ describe('AuditLogService', () => {
         { id: '2', action: AuditAction.UPDATE, entityType: AuditEntityType.USER },
       ];
 
-      const queryBuilder = mockAuditLogRepository.createQueryBuilder();
-      queryBuilder.getManyAndCount.mockResolvedValue([mockLogs, 2]);
+      mockQueryBuilder.getManyAndCount.mockResolvedValue([mockLogs, 2]);
 
       const filters = {
         action: AuditAction.CREATE,
@@ -144,11 +152,11 @@ describe('AuditLogService', () => {
 
       const result = await service.findAll(filters);
 
-      expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('auditLog.user', 'user');
-      expect(queryBuilder.andWhere).toHaveBeenCalledWith('auditLog.action = :action', { action: AuditAction.CREATE });
-      expect(queryBuilder.andWhere).toHaveBeenCalledWith('auditLog.entityType = :entityType', { entityType: AuditEntityType.USER });
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('auditLog.user', 'user');
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('auditLog.action = :action', { action: AuditAction.CREATE });
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('auditLog.entityType = :entityType', { entityType: AuditEntityType.USER });
       expect(result).toEqual({
-        auditLogs: mockLogs,
+        data: mockLogs,
         total: 2,
         page: 1,
         limit: 10,

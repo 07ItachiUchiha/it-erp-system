@@ -54,6 +54,7 @@ export class EmployeesController {
   }
 
   @Get('search')
+  @Roles(UserRole.ADMIN, UserRole.HR, UserRole.MANAGER)
   @ApiOperation({ summary: 'Advanced employee search with filters and pagination' })
   @ApiQuery({ name: 'search', required: false, description: 'Search in name, empId, email, phone, designation, department' })
   @ApiQuery({ name: 'department', required: false, description: 'Filter by department' })

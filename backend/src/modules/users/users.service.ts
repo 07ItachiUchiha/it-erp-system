@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, FindManyOptions, ILike } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -6,6 +6,7 @@ import { User, UserRole, UserStatus, Department, Designation } from './entities/
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { getDesignationsByDepartment, formatDesignationLabel, formatDepartmentLabel } from './utils/department-designation-mapping';
+import { EmployeesService } from '../employees/employees.service';
 
 export interface UserSearchFilters {
   search?: string;
@@ -31,6 +32,8 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @Inject(forwardRef(() => EmployeesService))
+    private employeesService: EmployeesService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -151,6 +154,16 @@ export class UsersService {
       where: { email },
       select: ['id', 'email', 'password', 'firstName', 'lastName', 'role', 'status'], // Include password for authentication
     });
+  }
+
+  async findUsersWithoutEmployeeRecords(): Promise<User[]> {
+    // This query finds users who don't have a corresponding employee record
+    return await this.userRepository
+      .createQueryBuilder('user')
+      .leftJoin('employees', 'employee', 'employee.email = user.email')
+      .where('employee.id IS NULL')
+      .select(['user.id', 'user.email', 'user.firstName', 'user.lastName', 'user.role', 'user.department', 'user.designation'])
+      .getMany();
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
@@ -358,5 +371,35 @@ export class UsersService {
       value: designation,
       label: formatDesignationLabel(designation)
     }));
+  }
+
+  async syncWithEmployees(): Promise<{ 
+    synchronized: number; 
+    created: number; 
+    errors: Array<{ userId: string; error: string }> 
+  }> {
+    const usersWithoutEmployees = await this.findUsersWithoutEmployeeRecords();
+    const results = {
+      synchronized: 0,
+      created: 0,
+      errors: []
+    };
+
+    for (const user of usersWithoutEmployees) {
+      try {
+        // Create employee record for user using the service's direct repository access
+        // This bypasses the automatic user creation in the create method
+        await this.employeesService.createEmployeeFromUser(user);
+        results.created++;
+        results.synchronized++;
+      } catch (error) {
+        results.errors.push({
+          userId: user.id,
+          error: error.message || 'Unknown error occurred'
+        });
+      }
+    }
+
+    return results;
   }
 }

@@ -113,6 +113,33 @@ export class UsersController {
     return this.usersService.getDesignationsByDepartment(department as any);
   }
 
+  @Get('available-for-employee-creation')
+  @Roles(UserRole.ADMIN, UserRole.HR)
+  @ApiOperation({ summary: 'Get users that can be converted to employees' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Available users retrieved successfully' })
+  async getUsersWithoutEmployeeRecords(): Promise<User[]> {
+    return await this.usersService.findUsersWithoutEmployeeRecords();
+  }
+
+  @Post('sync-with-employees')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Sync existing users with employee records' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Sync completed successfully' })
+  async syncUsersWithEmployees(): Promise<{ 
+    message: string; 
+    synchronized: number; 
+    created: number; 
+    errors: Array<{ userId: string; error: string }> 
+  }> {
+    const result = await this.usersService.syncWithEmployees();
+    return {
+      message: `Synchronization completed. Created ${result.created} employee records for existing users.`,
+      synchronized: result.synchronized,
+      created: result.created,
+      errors: result.errors
+    };
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiResponse({ status: HttpStatus.OK, description: 'User retrieved successfully' })
@@ -179,6 +206,7 @@ export class UsersController {
   }
 
   @Post('bulk-delete')
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Bulk delete users' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Users deleted successfully' })
   async bulkDelete(@Body('ids') ids: string[]): Promise<{ message: string }> {
@@ -187,6 +215,7 @@ export class UsersController {
   }
 
   @Patch('bulk-status')
+  @Roles(UserRole.ADMIN, UserRole.HR)
   @ApiOperation({ summary: 'Bulk update user status' })
   @ApiResponse({ status: HttpStatus.OK, description: 'User statuses updated successfully' })
   async bulkUpdateStatus(

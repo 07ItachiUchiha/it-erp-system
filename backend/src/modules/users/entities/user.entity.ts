@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, ManyToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, ManyToMany, OneToOne } from 'typeorm';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -131,6 +131,9 @@ export class User {
   lastLoginAt?: Date;
 
   // Relations
+  @OneToOne('Employee', 'user', { nullable: true })
+  employee?: any;
+
   @ManyToMany('Project', 'teamMembers')
   assignedProjects: any[];
 
