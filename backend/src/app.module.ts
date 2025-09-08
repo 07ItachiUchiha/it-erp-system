@@ -14,6 +14,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { ProjectsModule } from './modules/projects/projects.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { HrModule } from './modules/hr/hr.module';
+import { SettingsModule } from './modules/settings/settings.module';
 import { AppController } from './app.controller';
 import { databaseConfig } from './database/database.config';
 
@@ -47,6 +48,7 @@ import { databaseConfig } from './database/database.config';
     ProjectsModule,
     AdminModule,
     HrModule,
+    SettingsModule,
   ],
   controllers: [AppController],
   providers: [],
