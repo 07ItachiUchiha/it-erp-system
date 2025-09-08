@@ -1,80 +1,347 @@
 # IT ERP System
 
-A comprehensive Enterprise Resource Planning (ERP) system built with modern web technologies, featuring role-based access control, employee management, procurement, finance, and file management modules.
+**PROPRIETARY SOFTWARE - Copyright (c) 2025 DevSum IT Studio**
 
-##  Features
+ **IMPORTANT NOTICE:** This software is proprietary and protected by copyright. 
+Copying, distribution, or use without proper licensing is strictly prohibited. 
+To purchase a license, contact DevSum IT Studio at devsumstudio@gmail.com
 
-###  Authentication & Authorization
+## Overview
+
+IT ERP System is a comprehensive Enterprise Resource Planning (ERP) solution designed for IT and service-based companies. It provides modular business management features, including user and employee management, finance, procurement, inventory, HR, sales, projects, notifications, and file/document management. The system is built with a modern web stack: NestJS (backend), Next.js (frontend), and PostgreSQL (database).
+
+## Technology Stack
+
+- Backend: NestJS (Node.js, TypeScript)
+- Frontend: Next.js (React, TypeScript)
+- Database: PostgreSQL (TypeORM)
+- Styling: Tailwind CSS
+- State Management: React Context API
+- Authentication: JWT, bcrypt
+- API: RESTful, GraphQL (partial)
+
+## System Architecture
+
+### Architecture Overview
+
+The IT ERP System follows a modular monolith architecture with clear separation of concerns between frontend, backend, and database layers. The system is designed for scalability and maintainability with a modern web application stack.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    CLIENT LAYER                             │
+├─────────────────────────────────────────────────────────────┤
+│  Next.js Frontend (React + TypeScript)                     │
+│  ├── Pages (Next.js Router)                                │
+│  ├── Components (Reusable UI)                              │
+│  ├── Contexts (State Management)                           │
+│  ├── Services (API Integration)                            │
+│  └── Utils (Helper Functions)                              │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                         HTTP/HTTPS
+                              │
+┌─────────────────────────────────────────────────────────────┐
+│                   APPLICATION LAYER                         │
+├─────────────────────────────────────────────────────────────┤
+│  NestJS Backend (Node.js + TypeScript)                     │
+│  ├── Controllers (HTTP Request Handlers)                   │
+│  ├── Services (Business Logic)                             │
+│  ├── Modules (Feature Organization)                        │
+│  ├── Guards (Authentication & Authorization)               │
+│  ├── Decorators (Custom Logic)                             │
+│  └── DTOs (Data Transfer Objects)                          │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                           TypeORM
+                              │
+┌─────────────────────────────────────────────────────────────┐
+│                     DATA LAYER                              │
+├─────────────────────────────────────────────────────────────┤
+│  PostgreSQL Database                                        │
+│  ├── Tables (Entity Storage)                               │
+│  ├── Relationships (Foreign Keys)                          │
+│  ├── Indexes (Performance)                                 │
+│  ├── Triggers (Business Rules)                             │
+│  └── Migrations (Schema Management)                        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Component Architecture
+
+#### Frontend Architecture (Next.js)
+- **Pages**: Next.js file-based routing for different application screens
+- **Components**: Modular React components organized by feature/functionality
+- **Contexts**: React Context API for global state management (Auth, Theme)
+- **Services**: API communication layer with backend services
+- **Utils**: Utility functions and helpers for common operations
+
+#### Backend Architecture (NestJS)
+- **Modules**: Feature-based modules (Auth, Users, Finance, etc.)
+- **Controllers**: HTTP request handlers with route definitions
+- **Services**: Business logic implementation and data processing
+- **Entities**: TypeORM entities representing database tables
+- **DTOs**: Data Transfer Objects for request/response validation
+- **Guards**: Authentication and authorization middleware
+- **Decorators**: Custom decorators for roles and permissions
+
+#### Database Architecture (PostgreSQL)
+- **Normalized Schema**: Properly normalized database design
+- **Entity Relationships**: Well-defined foreign key relationships
+- **Indexes**: Performance optimization through strategic indexing
+- **Migrations**: Version-controlled schema changes
+- **Enums**: Type-safe enumeration values
+
+## System Flow and Working
+
+### 1. Authentication Flow
+
+```
+User Login Request → Frontend (Next.js)
+    ↓
+Credentials Sent → Backend Auth Controller
+    ↓
+Validation → Auth Service
+    ↓
+Password Check → bcrypt comparison
+    ↓
+JWT Generation → JWT Service
+    ↓
+Token Response → Frontend Storage (localStorage)
+    ↓
+Subsequent Requests → Include JWT in headers
+    ↓
+Token Validation → JWT Guard
+    ↓
+Role/Permission Check → Role Guard
+    ↓
+Access Granted/Denied
+```
+
+### 2. Data Flow Pattern
+
+```
+User Action (Frontend)
+    ↓
+API Call (Service Layer)
+    ↓
+HTTP Request (Axios)
+    ↓
+Backend Controller (Route Handler)
+    ↓
+Service Method (Business Logic)
+    ↓
+Repository (TypeORM)
+    ↓
+Database Query (PostgreSQL)
+    ↓
+Response Data
+    ↓
+Frontend Update (State/UI)
+```
+
+### 3. Module Interaction Flow
+
+```
+┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+│     Users    │◄──►│   Employees  │◄──►│      HR      │
+└──────────────┘    └──────────────┘    └──────────────┘
+        │                   │                   │
+        ▼                   ▼                   ▼
+┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+│     Auth     │◄──►│   Finance    │◄──►│  Procurement │
+└──────────────┘    └──────────────┘    └──────────────┘
+        │                   │                   │
+        ▼                   ▼                   ▼
+┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+│  Inventory   │◄──►│    Sales     │◄──►│   Projects   │
+└──────────────┘    └──────────────┘    └──────────────┘
+```
+
+### 4. Request Lifecycle
+
+#### Frontend Request Lifecycle
+1. **User Interaction**: User clicks button or submits form
+2. **Event Handler**: React component handles the event
+3. **Service Call**: Component calls appropriate service method
+4. **API Request**: Service makes HTTP request to backend
+5. **Response Handling**: Service processes response or error
+6. **State Update**: Component updates local/global state
+7. **UI Render**: React re-renders affected components
+
+#### Backend Request Lifecycle
+1. **Request Reception**: NestJS receives HTTP request
+2. **Route Matching**: Router matches request to controller method
+3. **Middleware Execution**: Guards, interceptors, and pipes execute
+4. **Controller Method**: Controller method processes request
+5. **Service Execution**: Business logic executes in service layer
+6. **Database Operation**: TypeORM performs database operations
+7. **Response Formation**: Controller formats and returns response
+
+### 5. Security Flow
+
+```
+Request → CORS Check → JWT Validation → Role Check → Permission Check → Resource Access
+    ↓           ↓            ↓             ↓              ↓               ↓
+  Allow     Validate     Decode JWT    Check User     Check Action    Grant/Deny
+            Origin       & Verify      Role           Permission      Access
+```
+
+### 6. Error Handling Flow
+
+```
+Error Occurrence
+    ↓
+Exception Filter (Backend)
+    ↓
+Error Logging
+    ↓
+Formatted Error Response
+    ↓
+Frontend Error Handler
+    ↓
+User Notification
+    ↓
+Error Recovery/Retry
+```
+
+### 7. Database Transaction Flow
+
+```
+Service Method Start
+    ↓
+Begin Transaction
+    ↓
+Multiple Operations
+    ↓
+Validation Check
+    ↓
+Commit/Rollback
+    ↓
+Response/Error
+```
+
+## Scalability Considerations
+
+### Current Architecture Benefits
+- **Modular Design**: Easy to maintain and extend individual modules
+- **Separation of Concerns**: Clear boundaries between layers
+- **Type Safety**: TypeScript throughout the stack
+- **ORM Benefits**: Database abstraction and migration management
+- **Role-Based Security**: Scalable permission system
+
+### Future Scalability Path
+- **Phase 1**: Modular monolith (current)
+- **Phase 2**: Microservices decomposition by domain
+- **Phase 3**: Multi-tenant SaaS platform
+- **Performance**: Caching layer, CDN, database optimization
+- **Deployment**: Containerization, orchestration, CI/CD
+
+## Project Structure
+
+```
+it-erp-system/
+├── backend/         # NestJS backend application
+│   ├── src/
+│   │   ├── modules/        # Feature modules
+│   │   ├── database/       # Database config & migrations
+│   │   └── ...
+│   └── ...
+├── frontend/        # Next.js frontend application
+│   ├── src/
+│   │   ├── components/     # UI components
+│   │   ├── contexts/       # React contexts
+│   │   ├── pages/          # Next.js pages
+│   │   ├── services/       # API services
+│   │   └── utils/          # Utility functions
+│   └── ...
+├── docs/            # Documentation
+└── infrastructure/  # Infrastructure as code
+```
+
+## Features and Modules
+
+### Authentication & Authorization
 - JWT-based authentication
 - Role-based access control (RBAC)
 - Six user roles: Admin, HR, Manager, Finance, Sales, Employee
 - Granular permission system with resource-action mapping
 
-###  User Management
+### User Management
 - Complete user lifecycle management
 - Role assignment and permission control
 - User profile management
 - Department-based organization
 
-###  Employee Management
+### Employee Management
 - Employee profile management
 - Department and role assignment
 - Employment status tracking
 - Role-based data filtering (employees see only their own data)
 
-###  Finance Module
+### Finance Module
 - Financial record management
 - Budget tracking
 - Expense management
 - Role-based financial data access
 
-###  Procurement Module
+### Procurement Module
 - Procurement request management
 - Multi-level approval workflow
 - Vendor management
 - Status tracking (draft, pending, approved, rejected, ordered, received)
 - Role-based request filtering
 
-###  Reports Module
+### Inventory Management
+- Warehouse management
+- Item/product management
+- Stock movement tracking
+- Barcode and batch/serial management
+- Product variants
+- Bill of Materials (BOM)
+- Manufacturing orders and workstations
+
+### HR Module
+- Leave request management
+- Payroll processing
+- Performance reviews
+- Attendance tracking
+- Compliance tracking
+
+### Sales Module
+- Lead and opportunity management
+- Customer and contact management
+- Sales pipeline and quotation management
+- Order and invoice management
+- Sales analytics
+
+### Projects Module
+- Project creation and management
+- Task assignment and tracking
+- Team collaboration
+- Project analytics and reporting
+
+### Reports Module
 - Generate various business reports
 - Role-based report access
 - Export functionality
 
-###  File Management
+### File Management
 - Document upload and management
 - File categorization
 - Access control based on user roles
 
-##  Technology Stack
+### Notifications Module
+- Real-time and email notifications
+- Notification templates
+- User notification preferences
 
-### Backend
-- **Framework**: NestJS (Node.js)
-- **Database**: PostgreSQL
-- **Authentication**: JWT (JSON Web Tokens)
-- **Password Hashing**: bcrypt
-- **API**: RESTful API design
-- **Validation**: Class-validator & Class-transformer
-
-### Frontend
-- **Framework**: Next.js (React)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **Icons**: Heroicons
-- **State Management**: React Context API
-- **HTTP Client**: Axios
-
-### Infrastructure
-- **Database**: PostgreSQL
-- **Development**: Docker Compose
-- **Package Manager**: npm
-
-##  Prerequisites
+## Prerequisites
 
 - Node.js (v16 or higher)
 - PostgreSQL (v12 or higher)
 - npm or yarn package manager
 
-##  Quick Start
+## Quick Start
 
 ### 1. Clone the Repository
 ```bash
@@ -116,7 +383,7 @@ npm run dev
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:3001
 
-##  Default User Accounts
+## Default User Accounts
 
 After setting up the system, you can create users with different roles:
 
@@ -127,38 +394,7 @@ After setting up the system, you can create users with different roles:
 - **Sales**: Sales-related operations
 - **Employee**: Limited access to own data
 
-##  Project Structure
-
-```
-it-erp-system/
-├── backend/                 # NestJS backend application
-│   ├── src/
-│   │   ├── modules/        # Feature modules
-│   │   │   ├── auth/       # Authentication module
-│   │   │   ├── users/      # User management
-│   │   │   ├── employees/  # Employee management
-│   │   │   ├── finance/    # Finance module
-│   │   │   ├── procurement/ # Procurement module
-│   │   │   ├── files/      # File management
-│   │   │   └── ...
-│   │   ├── database/       # Database configuration
-│   │   └── ...
-│   └── ...
-├── frontend/               # Next.js frontend application
-│   ├── src/
-│   │   ├── components/     # Reusable components
-│   │   │   ├── auth/       # Authentication components
-│   │   │   └── layout/     # Layout components
-│   │   ├── contexts/       # React contexts
-│   │   ├── pages/          # Next.js pages
-│   │   ├── services/       # API services
-│   │   └── utils/          # Utility functions
-│   └── ...
-├── docs/                   # Documentation
-└── infrastructure/         # Infrastructure files
-```
-
-##  Role-Based Access Control
+## Role-Based Access Control
 
 ### Permission Matrix
 
@@ -173,7 +409,7 @@ it-erp-system/
 
 **Legend**: C=Create, R=Read, U=Update, D=Delete, A=Approve, *=Own data only
 
-##  Development
+## Development
 
 ### Backend Development
 ```bash
@@ -191,7 +427,7 @@ npm run build        # Build for production
 npm run test         # Run tests
 ```
 
-##  Deployment
+## Deployment
 
 ### Production Setup
 1. Set up PostgreSQL database
@@ -218,169 +454,36 @@ PORT=3001
 NEXT_PUBLIC_API_URL=http://localhost:3001
 ```
 
-##  Contributing
+## Roadmap
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+- Advanced reporting and analytics
+- Mobile application
+- Integration with third-party services
+- Advanced workflow management
+- Real-time notifications
+- Audit logging and compliance
 
-##  License
+## Contributing
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This is proprietary software owned by DevSum IT Studio. Contributing is not permitted 
+without explicit written permission and a signed contributor agreement.
 
-##  Issues & Support
+## License
 
-If you encounter any issues or need support, please create an issue on the GitHub repository.
+**PROPRIETARY LICENSE - ALL RIGHTS RESERVED**
 
-##  Roadmap
+This project is the exclusive property of DevSum IT Studio. Copying, distribution, 
+modification, or use without proper licensing is strictly prohibited and may result 
+in legal action.
 
-- [ ] Advanced reporting and analytics
-- [ ] Mobile application
-- [ ] Integration with third-party services
-- [ ] Advanced workflow management
-- [ ] Real-time notifications
-- [ ] Audit logging and compliance
+**To Purchase License:** Contact DevSum IT Studio
+- Email: devsumstudio@gmail.com  
+- Website: www.devsumstudio.com
+
+See the LICENSE file for complete terms and conditions.
 
 ---
 
-**Built with  using NestJS and Next.js**
-- **Sales & CRM** - Lead management, client relationships, sales pipeline
-- **Procurement** - Vendor management, purchase orders, asset tracking
-- **Administration** - User management, company settings, workflows
+**Built with using NestJS and Next.js**
 
-### Tech Stack
-
-#### Frontend
-- **React + Next.js** - Modern web application with SSR
-- **TailwindCSS** - Utility-first CSS framework
-- **TypeScript** - Type-safe development
-
-#### Backend
-- **Node.js + NestJS** - Enterprise-grade backend framework
-- **GraphQL + Apollo** - Flexible API querying
-- **TypeScript** - Full-stack type safety
-
-#### Database
-- **Amazon Aurora PostgreSQL** - Primary database (Serverless v2)
-- **Amazon ElastiCache (Redis)** - Caching layer
-- **Amazon S3** - Document storage
-
-#### Cloud Infrastructure (AWS)
-- **ECS Fargate** - Containerized microservices
-- **Amazon Cognito** - Authentication & authorization
-- **API Gateway** - API management
-- **CloudFront** - CDN
-- **Step Functions** - Workflow orchestration
-- **SQS/SNS** - Messaging & notifications
-
-#### Analytics & Monitoring
-- **Amazon QuickSight** - Business intelligence dashboards
-- **AWS Athena + S3 Data Lake** - Analytics
-- **CloudWatch + X-Ray** - Monitoring & tracing
-
-##  Getting Started
-
-### Prerequisites
-- Node.js 18+
-- Docker
-- AWS CLI configured
-- Terraform or AWS CDK
-
-### Local Development
-```bash
-# Clone the repository
-git clone <repository-url>
-cd it-erp-system
-
-# Setup backend
-cd backend
-npm install
-npm run start:dev
-
-# Setup frontend
-cd ../frontend
-npm install
-npm run dev
-
-# Setup mobile (React Native)
-cd ../mobile
-npm install
-npx react-native run-android  # or run-ios
-```
-
-##  Project Structure
-
-```
-it-erp-system/
-├── frontend/          # Next.js web application
-├── backend/           # NestJS API server
-├── mobile/            # React Native mobile app
-├── infrastructure/    # AWS infrastructure as code
-├── docs/             # Documentation
-└── docker-compose.yml # Local development environment
-```
-
-##  Security Features
-
-- Multi-factor authentication (MFA)
-- Role-based access control (RBAC)
-- Data encryption at rest and in transit
-- Audit trails for compliance
-- AWS WAF protection
-
-##  Key Features
-
-### For Employees
-- Self-service portal for leave requests
-- Timesheet management
-- Expense reporting
-- Project collaboration tools
-
-### For Managers
-- Team performance dashboards
-- Project monitoring
-- Approval workflows
-- Resource planning
-
-### For HR
-- Employee lifecycle management
-- Payroll processing
-- Performance reviews
-- Compliance tracking
-
-### For Finance
-- Automated invoicing
-- Expense management
-- Financial reporting
-- Budget tracking
-
-### For Sales
-- Lead management
-- Client relationship tracking
-- Sales pipeline
-- Proposal generation
-
-##  Development Workflow
-
-1. **Planning** - Feature requirements and technical design
-2. **Development** - Feature branches with PR reviews
-3. **Testing** - Automated testing and quality checks
-4. **Deployment** - CI/CD pipeline to AWS
-5. **Monitoring** - Performance and error tracking
-
-##  Scalability
-
-The system is designed to scale from startup to enterprise:
-- **Phase 1**: Modular monolith for rapid development
-- **Phase 2**: Microservices split by domain
-- **Phase 3**: Multi-tenant SaaS platform
-
-##  Contributing
-
-Please read our contributing guidelines and code of conduct before submitting pull requests.
-
-##  License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+Copyright (c) 2025 DevSum IT Studio. All Rights Reserved.
