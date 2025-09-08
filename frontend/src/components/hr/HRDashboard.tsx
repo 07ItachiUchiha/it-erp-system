@@ -9,7 +9,7 @@ import ComplianceTrackingTab from './ComplianceTrackingTab';
 import { hrEmployeeService, leaveRequestService, payrollService, performanceReviewService } from '../../services/hrService';
 import employeeService from '../../services/employeeService';
 import { exportToCSV, exportToExcel, exportToPDF } from '../../services/exportService';
-import { formatCurrency } from '../../utils/currency';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
 type TabType = 'leave-requests' | 'payroll' | 'performance-reviews' | 'attendance' | 'compliance';
 
@@ -22,6 +22,7 @@ interface HRStats {
 }
 
 const HRDashboard: React.FC = () => {
+    const { formatAmount } = useCurrency();
     const [activeTab, setActiveTab] = useState<TabType>('leave-requests');
     const [stats, setStats] = useState<HRStats>({
         totalEmployees: 0,
@@ -85,7 +86,7 @@ const HRDashboard: React.FC = () => {
                     { metric: 'Completed Reviews', value: reviews?.data?.filter((r: any) => r.status === 'COMPLETED').length || 0 },
                     { 
                         metric: 'Total Payroll Amount', 
-                        value: formatCurrency(
+                        value: formatAmount(
                             payrolls?.data?.reduce((sum: number, p: any) => sum + (p.netPay || 0), 0) || 0
                         )
                     }

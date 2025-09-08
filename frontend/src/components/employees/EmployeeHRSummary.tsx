@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import Modal from '../common/Modal';
 import { Employee } from '../../services/employeeService';
 import { 
@@ -27,6 +28,7 @@ interface HRSummary {
 }
 
 const EmployeeHRSummary: React.FC<EmployeeHRSummaryProps> = ({ employee, isOpen, onClose }) => {
+  const { formatAmount } = useCurrency();
   const [hrSummary, setHrSummary] = useState<HRSummary>({
     totalLeaveRequests: 0,
     pendingLeaveRequests: 0,
@@ -88,13 +90,6 @@ const EmployeeHRSummary: React.FC<EmployeeHRSummaryProps> = ({ employee, isOpen,
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
   };
 
   const getAttendancePercentage = () => {
@@ -203,7 +198,7 @@ const EmployeeHRSummary: React.FC<EmployeeHRSummaryProps> = ({ employee, isOpen,
                     </div>
                     <div className="flex justify-between">
                       <span className="text-purple-700">Net Pay:</span>
-                      <span className="font-medium">{formatCurrency(hrSummary.latestPayroll.netPay || 0)}</span>
+                      <span className="font-medium">{formatAmount(hrSummary.latestPayroll.netPay || 0)}</span>
                     </div>
                   </>
                 )}

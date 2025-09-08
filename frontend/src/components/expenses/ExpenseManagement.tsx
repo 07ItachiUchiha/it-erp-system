@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { financeService, Expense } from '../../services/financeService';
 
 interface ExpenseFormData {
@@ -11,6 +12,7 @@ interface ExpenseFormData {
 }
 
 const ExpenseManagement: React.FC = () => {
+  const { formatAmount } = useCurrency();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -137,13 +139,6 @@ const ExpenseManagement: React.FC = () => {
     return option ? option.label : category;
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR'
-    }).format(amount);
-  };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-IN');
   };
@@ -182,7 +177,7 @@ const ExpenseManagement: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Total Expenses</h3>
-          <p className="text-3xl font-bold text-indigo-600">{formatCurrency(totalExpenses)}</p>
+          <p className="text-3xl font-bold text-indigo-600">{formatAmount(totalExpenses)}</p>
           <p className="text-sm text-gray-600">{filteredExpenses.length} expense(s)</p>
         </div>
 
@@ -422,7 +417,7 @@ const ExpenseManagement: React.FC = () => {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatCurrency(expense.amount)}
+                      {formatAmount(expense.amount)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatDate(expense.date)}

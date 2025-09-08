@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/layout/Layout';
-import { formatCurrency } from '../utils/currency';
 import { fileService, FileEntity } from '../services/fileService';
 import {
   DocumentIcon,

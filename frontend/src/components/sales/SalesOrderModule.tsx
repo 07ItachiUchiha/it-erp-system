@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { SalesOrderStorageService } from '../../services/localStorageService';
 import { exportSalesOrdersToCSV } from '../../utils/csvExport';
 import { ShoppingCart, Plus, Search, Edit, Trash2, Download, Filter, Calendar, User, Building, IndianRupee, Package, Truck, Clock, Mail, Phone } from 'lucide-react';
 
 const SalesOrderModule: React.FC = () => {
+  const { formatAmount } = useCurrency();
   const [salesOrders, setSalesOrders] = useState<any[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -334,7 +336,7 @@ const SalesOrderModule: React.FC = () => {
             </div>
             <div className="ml-3">
               <p className="text-sm font-medium text-gray-500">Total Value</p>
-              <p className="text-2xl font-semibold text-gray-900">₹{stats.totalValue.toFixed(2)}</p>
+              <p className="text-2xl font-semibold text-gray-900">{formatAmount(stats.totalValue)}</p>
             </div>
           </div>
         </div>
@@ -654,7 +656,7 @@ const SalesOrderModule: React.FC = () => {
                         className="col-span-2 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-orange-500"
                       />
                       <div className="col-span-2 px-2 py-1 text-sm text-gray-700">
-                        ₹{item.total.toFixed(2)}
+                        {formatAmount(item.total)}
                       </div>
                       <button
                         type="button"
@@ -675,7 +677,7 @@ const SalesOrderModule: React.FC = () => {
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span>Subtotal:</span>
-                        <span>₹{newSalesOrder.subtotal.toFixed(2)}</span>
+                        <span>{formatAmount(newSalesOrder.subtotal)}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span>Tax:</span>
@@ -705,7 +707,7 @@ const SalesOrderModule: React.FC = () => {
                       </div>
                       <div className="flex justify-between font-bold">
                         <span>Total:</span>
-                        <span>₹{newSalesOrder.total.toFixed(2)}</span>
+                        <span>{formatAmount(newSalesOrder.total)}</span>
                       </div>
                     </div>
                   </div>

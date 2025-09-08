@@ -3,7 +3,7 @@ import Layout from '../components/layout/Layout';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import RoleBasedComponent from '../components/auth/RoleBasedComponent';
 import { useAuth } from '../contexts/AuthContext';
-import { formatCurrency } from '../utils/currency';
+import { useCurrency } from '../contexts/CurrencyContext';
 import { procurementService, ProcurementRequest, ProcurementStats } from '../services/procurementService';
 import { 
   MagnifyingGlassIcon, 
@@ -42,6 +42,7 @@ const ProcurementPage: React.FC = () => {
 
 const ProcurementContent: React.FC = () => {
   const { user } = useAuth();
+  const { formatAmount } = useCurrency();
   const [requests, setRequests] = useState<ProcurementRequest[]>([]);
   const [stats, setStats] = useState<ProcurementStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -467,7 +468,7 @@ const ProcurementContent: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-purple-600">Total Budget</p>
                   <p className="text-2xl font-bold text-purple-900">
-                    {formatCurrency(requests.reduce((sum, req) => sum + req.estimatedAmount, 0))}
+                    {formatAmount(requests.reduce((sum, req) => sum + req.estimatedAmount, 0))}
                   </p>
                 </div>
                 <div className="p-3 bg-purple-100 rounded-full">
@@ -611,10 +612,10 @@ const ProcurementContent: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                      {formatCurrency(request.estimatedAmount)}
+                      {formatAmount(request.estimatedAmount)}
                       {request.actualAmount && (
                         <div className="text-xs text-gray-500">
-                          Actual: {formatCurrency(request.actualAmount)}
+                          Actual: {formatAmount(request.actualAmount)}
                         </div>
                       )}
                     </td>
@@ -1045,7 +1046,7 @@ const ProcurementContent: React.FC = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Estimated Amount</label>
-                      <p className="text-sm text-gray-900 font-semibold">{formatCurrency(selectedRequest.estimatedAmount)}</p>
+                      <p className="text-sm text-gray-900 font-semibold">{formatAmount(selectedRequest.estimatedAmount)}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Vendor</label>

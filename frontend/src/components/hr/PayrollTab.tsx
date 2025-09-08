@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../common/Modal';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { payrollService, hrEmployeeService } from '../../services/hrService';
 import { Employee } from '../../services/employeeService';
 
@@ -38,6 +39,7 @@ interface CreatePayrollData {
 
 const PayrollTab: React.FC = () => {
   const { user } = useAuth();
+  const { formatAmount } = useCurrency();
   const [payrolls, setPayrolls] = useState<Payroll[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,13 +124,6 @@ const PayrollTab: React.FC = () => {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -190,11 +185,11 @@ const PayrollTab: React.FC = () => {
                       </div>
                       <div>
                         <p className="text-gray-600">Gross Pay</p>
-                        <p className="font-medium text-green-600">{formatCurrency(payroll.grossPay)}</p>
+                        <p className="font-medium text-green-600">{formatAmount(payroll.grossPay)}</p>
                       </div>
                       <div>
                         <p className="text-gray-600">Net Pay</p>
-                        <p className="font-medium text-blue-600">{formatCurrency(payroll.netPay)}</p>
+                        <p className="font-medium text-blue-600">{formatAmount(payroll.netPay)}</p>
                       </div>
                     </div>
                   </div>
@@ -377,36 +372,36 @@ const PayrollTab: React.FC = () => {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Basic Salary:</span>
-                      <span>{formatCurrency(selectedPayroll.basicSalary)}</span>
+                      <span>{formatAmount(selectedPayroll.basicSalary)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Allowances:</span>
-                      <span>{formatCurrency(selectedPayroll.allowances)}</span>
+                      <span>{formatAmount(selectedPayroll.allowances)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Overtime:</span>
-                      <span>{formatCurrency(selectedPayroll.overtime)}</span>
+                      <span>{formatAmount(selectedPayroll.overtime)}</span>
                     </div>
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Deductions:</span>
-                      <span className="text-red-600">-{formatCurrency(selectedPayroll.deductions)}</span>
+                      <span className="text-red-600">-{formatAmount(selectedPayroll.deductions)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Tax Deductions:</span>
-                      <span className="text-red-600">-{formatCurrency(selectedPayroll.taxDeductions)}</span>
+                      <span className="text-red-600">-{formatAmount(selectedPayroll.taxDeductions)}</span>
                     </div>
                   </div>
                 </div>
                 <div className="border-t pt-2 mt-3">
                   <div className="flex justify-between font-medium">
                     <span>Gross Pay:</span>
-                    <span className="text-green-600">{formatCurrency(selectedPayroll.grossPay)}</span>
+                    <span className="text-green-600">{formatAmount(selectedPayroll.grossPay)}</span>
                   </div>
                   <div className="flex justify-between font-bold text-lg">
                     <span>Net Pay:</span>
-                    <span className="text-blue-600">{formatCurrency(selectedPayroll.netPay)}</span>
+                    <span className="text-blue-600">{formatAmount(selectedPayroll.netPay)}</span>
                   </div>
                 </div>
               </div>

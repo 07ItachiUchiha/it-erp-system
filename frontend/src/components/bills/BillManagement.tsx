@@ -1,4 +1,5 @@
 import React, { useState, useEffect, ChangeEvent } from 'react';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { Plus, Download, Eye, Edit, Trash2, FileText, DollarSign, Calendar, Filter } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -115,14 +116,6 @@ const paymentSchema = z.object({
 });
 
 // Utility functions
-const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    minimumFractionDigits: 2
-  }).format(amount);
-};
-
 const formatDate = (dateString: string): string => {
   return new Date(dateString).toLocaleDateString('en-IN', {
     year: 'numeric',
@@ -156,7 +149,9 @@ const getBillTypeDisplay = (billType: string): string => {
 };
 
 // Components
-const BillSummaryCards: React.FC<{ summary: BillSummary }> = ({ summary }) => (
+const BillSummaryCards: React.FC<{ summary: BillSummary }> = ({ summary }) => {
+  const { formatAmount } = useCurrency();
+  return (
   <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
     <Card>
       <CardContent className="p-4">
@@ -211,7 +206,7 @@ const BillSummaryCards: React.FC<{ summary: BillSummary }> = ({ summary }) => (
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-600">Total Amount</p>
-            <p className="text-lg font-bold">{formatCurrency(summary.totalAmount)}</p>
+            <p className="text-lg font-bold">{formatAmount(summary.totalAmount)}</p>
           </div>
           <DollarSign className="h-8 w-8 text-blue-600" />
         </div>
@@ -223,14 +218,15 @@ const BillSummaryCards: React.FC<{ summary: BillSummary }> = ({ summary }) => (
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-600">Pending Amount</p>
-            <p className="text-lg font-bold text-orange-600">{formatCurrency(summary.pendingAmount)}</p>
+            <p className="text-lg font-bold text-orange-600">{formatAmount(summary.pendingAmount)}</p>
           </div>
           <DollarSign className="h-8 w-8 text-orange-600" />
         </div>
       </CardContent>
     </Card>
   </div>
-);
+  );
+};
 
 const BillForm: React.FC<{
   bill?: Bill;
@@ -706,6 +702,7 @@ const PaymentForm: React.FC<{
   onCancel: () => void;
   isLoading?: boolean;
 }> = ({ bill, onSubmit, onCancel, isLoading = false }) => {
+  const { formatAmount } = useCurrency();
   const form = useForm({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
@@ -728,15 +725,15 @@ const PaymentForm: React.FC<{
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <span className="font-medium">Total: </span>
-                {formatCurrency(bill.totalAmount)}
+                {formatAmount(bill.totalAmount)}
               </div>
               <div>
                 <span className="font-medium">Paid: </span>
-                {formatCurrency(totalPaid)}
+                {formatAmount(totalPaid)}
               </div>
               <div>
                 <span className="font-medium">Remaining: </span>
-                {formatCurrency(remainingAmount)}
+                {formatAmount(remainingAmount)}
               </div>
             </div>
           </AlertDescription>
@@ -853,6 +850,7 @@ const PaymentForm: React.FC<{
 
 // Main Component
 const BillManagement: React.FC = () => {
+  const { formatAmount } = useCurrency();
   const [bills, setBills] = useState<Bill[]>([]);
   const [summary, setSummary] = useState<BillSummary>({
     totalBills: 0,
@@ -1118,7 +1116,7 @@ const BillManagement: React.FC = () => {
                     <TableCell>{bill.vendorName}</TableCell>
                     <TableCell>{formatDate(bill.billDate)}</TableCell>
                     <TableCell>{formatDate(bill.dueDate)}</TableCell>
-                    <TableCell>{formatCurrency(bill.totalAmount)}</TableCell>
+                    <TableCell>{formatAmount(bill.totalAmount)}</TableCell>
                     <TableCell>
                       <Badge className={getStatusColor(bill.status)}>
                         {bill.status.replace('_', ' ').toUpperCase()}
@@ -1153,7 +1151,7 @@ const BillManagement: React.FC = () => {
                                 </div>
                                 <div>
                                   <span className="font-medium">Amount: </span>
-                                  {formatCurrency(bill.totalAmount)}
+                                  {formatAmount(bill.totalAmount)}
                                 </div>
                                 <div>
                                   <span className="font-medium">Status: </span>
@@ -1163,7 +1161,7 @@ const BillManagement: React.FC = () => {
                                 </div>
                                 <div>
                                   <span className="font-medium">GST: </span>
-                                  {formatCurrency(bill.cgstAmount + bill.sgstAmount + bill.igstAmount)}
+                                  {formatAmount(bill.cgstAmount + bill.sgstAmount + bill.igstAmount)}
                                 </div>
                               </div>
                               
@@ -1174,7 +1172,7 @@ const BillManagement: React.FC = () => {
                                     {bill.payments.map((payment, index) => (
                                       <div key={index} className="flex justify-between text-sm">
                                         <span>{formatDate(payment.paymentDate)} - {payment.paymentMethod}</span>
-                                        <span>{formatCurrency(payment.paidAmount)}</span>
+                                        <span>{formatAmount(payment.paidAmount)}</span>
                                       </div>
                                     ))}
                                   </div>

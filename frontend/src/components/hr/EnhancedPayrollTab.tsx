@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import Modal from '../common/Modal';
 import AdvancedTable, { Column } from '../common/AdvancedTable';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { payrollService } from '../../services/hrService';
 import employeeService, { Employee } from '../../services/employeeService';
 import { exportToCSV, exportToExcel, exportToPDF, formatDataForExport } from '../../services/exportService';
-import { formatCurrency } from '../../utils/currency';
 
 interface Payroll {
   id: string;
@@ -41,6 +41,7 @@ interface CreatePayrollData {
 
 const EnhancedPayrollTab: React.FC = () => {
   const { user } = useAuth();
+  const { formatAmount } = useCurrency();
   const [payrolls, setPayrolls] = useState<Payroll[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
@@ -221,7 +222,7 @@ const EnhancedPayrollTab: React.FC = () => {
       header: 'Basic Salary',
       sortable: true,
       render: (payroll) => (
-        <span className="font-mono text-sm">{formatCurrency(payroll.basicSalary)}</span>
+        <span className="font-mono text-sm">{formatAmount(payroll.basicSalary)}</span>
       )
     },
     {
@@ -229,7 +230,7 @@ const EnhancedPayrollTab: React.FC = () => {
       header: 'Allowances',
       sortable: true,
       render: (payroll) => (
-        <span className="font-mono text-sm text-green-600">{formatCurrency(payroll.allowances)}</span>
+        <span className="font-mono text-sm text-green-600">{formatAmount(payroll.allowances)}</span>
       )
     },
     {
@@ -237,7 +238,7 @@ const EnhancedPayrollTab: React.FC = () => {
       header: 'Deductions',
       sortable: true,
       render: (payroll) => (
-        <span className="font-mono text-sm text-red-600">{formatCurrency(payroll.deductions)}</span>
+        <span className="font-mono text-sm text-red-600">{formatAmount(payroll.deductions)}</span>
       )
     },
     {
@@ -245,7 +246,7 @@ const EnhancedPayrollTab: React.FC = () => {
       header: 'Overtime',
       sortable: true,
       render: (payroll) => (
-        <span className="font-mono text-sm text-blue-600">{formatCurrency(payroll.overtime)}</span>
+        <span className="font-mono text-sm text-blue-600">{formatAmount(payroll.overtime)}</span>
       )
     },
     {
@@ -253,7 +254,7 @@ const EnhancedPayrollTab: React.FC = () => {
       header: 'Gross Pay',
       sortable: true,
       render: (payroll) => (
-        <span className="font-mono text-sm font-medium">{formatCurrency(payroll.grossPay)}</span>
+        <span className="font-mono text-sm font-medium">{formatAmount(payroll.grossPay)}</span>
       )
     },
     {
@@ -261,7 +262,7 @@ const EnhancedPayrollTab: React.FC = () => {
       header: 'Net Pay',
       sortable: true,
       render: (payroll) => (
-        <span className="font-mono text-sm font-bold text-green-700">{formatCurrency(payroll.netPay)}</span>
+        <span className="font-mono text-sm font-bold text-green-700">{formatAmount(payroll.netPay)}</span>
       )
     },
     {
@@ -455,13 +456,13 @@ const EnhancedPayrollTab: React.FC = () => {
                 <div>
                   <span className="font-medium">Gross Pay:</span>
                   <span className="ml-2 font-mono">
-                    {formatCurrency(newPayroll.basicSalary + newPayroll.allowances + newPayroll.overtime)}
+                    {formatAmount(newPayroll.basicSalary + newPayroll.allowances + newPayroll.overtime)}
                   </span>
                 </div>
                 <div>
                   <span className="font-medium">Net Pay:</span>
                   <span className="ml-2 font-mono font-bold text-green-700">
-                    {formatCurrency(
+                    {formatAmount(
                       newPayroll.basicSalary + newPayroll.allowances + newPayroll.overtime - 
                       newPayroll.deductions - newPayroll.taxDeductions
                     )}
@@ -534,32 +535,32 @@ const EnhancedPayrollTab: React.FC = () => {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Basic Salary:</span>
-                    <span className="text-sm font-mono">{formatCurrency(selectedPayroll.basicSalary)}</span>
+                    <span className="text-sm font-mono">{formatAmount(selectedPayroll.basicSalary)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Allowances:</span>
-                    <span className="text-sm font-mono text-green-600">+ {formatCurrency(selectedPayroll.allowances)}</span>
+                    <span className="text-sm font-mono text-green-600">+ {formatAmount(selectedPayroll.allowances)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Overtime:</span>
-                    <span className="text-sm font-mono text-blue-600">+ {formatCurrency(selectedPayroll.overtime)}</span>
+                    <span className="text-sm font-mono text-blue-600">+ {formatAmount(selectedPayroll.overtime)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Deductions:</span>
-                    <span className="text-sm font-mono text-red-600">- {formatCurrency(selectedPayroll.deductions)}</span>
+                    <span className="text-sm font-mono text-red-600">- {formatAmount(selectedPayroll.deductions)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Tax Deductions:</span>
-                    <span className="text-sm font-mono text-red-600">- {formatCurrency(selectedPayroll.taxDeductions)}</span>
+                    <span className="text-sm font-mono text-red-600">- {formatAmount(selectedPayroll.taxDeductions)}</span>
                   </div>
                   <div className="border-t pt-2">
                     <div className="flex justify-between">
                       <span className="text-sm font-medium text-gray-900">Gross Pay:</span>
-                      <span className="text-sm font-mono font-medium">{formatCurrency(selectedPayroll.grossPay)}</span>
+                      <span className="text-sm font-mono font-medium">{formatAmount(selectedPayroll.grossPay)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm font-bold text-gray-900">Net Pay:</span>
-                      <span className="text-sm font-mono font-bold text-green-700">{formatCurrency(selectedPayroll.netPay)}</span>
+                      <span className="text-sm font-mono font-bold text-green-700">{formatAmount(selectedPayroll.netPay)}</span>
                     </div>
                   </div>
                 </div>

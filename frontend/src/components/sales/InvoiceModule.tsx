@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { InvoiceStorageService } from '../../services/localStorageService';
 import { exportInvoicesToCSV } from '../../utils/csvExport';
 import { FileText, Plus, Search, Edit, Trash2, Download, Filter, Calendar, User, Building, IndianRupee, Mail, Phone, Printer, Eye, Send } from 'lucide-react';

@@ -15,7 +15,7 @@ import {
   Area,
   AreaChart,
 } from 'recharts';
-import { formatCurrency } from '@/utils/currency';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
 interface AnalyticsData {
   monthlyRevenue: Array<{ month: string; revenue: number; expenses: number; profit: number }>;
@@ -31,6 +31,12 @@ interface AnalyticsDashboardProps {
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
 export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ data }) => {
+  const { formatAmount } = useCurrency();
+  
+  // Wrapper functions for chart components that expect different signatures
+  const formatCurrencyForChart = (value: number) => formatAmount(value);
+  const formatCurrencyForTooltip = (value: number) => formatAmount(value);
+  
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
       {/* Monthly Revenue Chart */}
@@ -42,8 +48,8 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ data }) 
           <BarChart data={data.monthlyRevenue}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="month" />
-            <YAxis tickFormatter={formatCurrency} />
-            <Tooltip formatter={formatCurrency} />
+            <YAxis tickFormatter={formatCurrencyForChart} />
+            <Tooltip formatter={formatCurrencyForTooltip} />
             <Bar dataKey="revenue" fill="#10B981" name="Revenue" />
             <Bar dataKey="expenses" fill="#EF4444" name="Expenses" />
           </BarChart>
@@ -73,7 +79,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ data }) 
                 <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
               ))}
             </Pie>
-            <Tooltip formatter={formatCurrency} />
+            <Tooltip formatter={formatCurrencyForTooltip} />
           </PieChart>
         </ResponsiveContainer>
       </div>
@@ -87,8 +93,8 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ data }) 
           <AreaChart data={data.monthlyRevenue}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="month" />
-            <YAxis tickFormatter={formatCurrency} />
-            <Tooltip formatter={formatCurrency} />
+            <YAxis tickFormatter={formatCurrencyForChart} />
+            <Tooltip formatter={formatCurrencyForTooltip} />
             <Area
               type="monotone"
               dataKey="profit"

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { 
   Users, 
   MessageSquare, 
@@ -31,6 +32,7 @@ interface SalesDashboardProps {
 }
 
 const SalesDashboard: React.FC<SalesDashboardProps> = ({ stats, onTabChange }) => {
+  const { formatAmount } = useCurrency();
   const [showPerformance, setShowPerformance] = useState(false);
   const quickActions = [
     {
@@ -122,7 +124,7 @@ const SalesDashboard: React.FC<SalesDashboardProps> = ({ stats, onTabChange }) =
     },
     {
       name: 'Total Revenue',
-      value: `₹${(stats.totalRevenue || 0).toLocaleString('en-IN')}`,
+      value: formatAmount(stats.totalRevenue || 0),
       icon: IndianRupee,
       color: 'text-emerald-600',
       bgColor: 'bg-emerald-100',

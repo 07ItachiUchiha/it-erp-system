@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/layout/Layout';
-import { formatCurrency } from '../utils/currency';
+import { useCurrency } from '../contexts/CurrencyContext';
 import { reportsService, ReportData as ApiReportData } from '../services/reportsService';
 import {
   ChartBarIcon,
@@ -43,6 +43,7 @@ interface ReportData {
 }
 
 const ReportsPage: React.FC = () => {
+  const { formatAmount } = useCurrency();
   const [reportData, setReportData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState('monthly');
@@ -239,9 +240,9 @@ const ReportsPage: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-green-600">Net Profit</p>
-                <p className="text-3xl font-bold text-green-900">{formatCurrency(reportData?.finance?.netProfit || 0)}</p>
+                <p className="text-3xl font-bold text-green-900">{formatAmount(reportData?.finance?.netProfit || 0)}</p>
                 <p className="text-sm text-gray-500">
-                  Revenue: {formatCurrency(reportData?.finance?.totalRevenue || 0)}
+                  Revenue: {formatAmount(reportData?.finance?.totalRevenue || 0)}
                 </p>
               </div>
               <div className="p-3 bg-green-100 rounded-full">
@@ -254,7 +255,7 @@ const ReportsPage: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-purple-600">Procurement Budget</p>
-                <p className="text-3xl font-bold text-purple-900">{formatCurrency(reportData?.procurement?.totalValue || 0)}</p>
+                <p className="text-3xl font-bold text-purple-900">{formatAmount(reportData?.procurement?.totalValue || 0)}</p>
                 <p className="text-sm text-gray-500">
                   {reportData?.procurement?.pending || 0} pending approval
                 </p>
@@ -339,15 +340,15 @@ const ReportsPage: React.FC = () => {
               <div className="space-y-4">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Total Revenue</span>
-                  <span className="font-semibold text-green-600">{formatCurrency(reportData?.finance?.totalRevenue || 0)}</span>
+                  <span className="font-semibold text-green-600">{formatAmount(reportData?.finance?.totalRevenue || 0)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Total Expenses</span>
-                  <span className="font-semibold text-red-600">{formatCurrency(reportData?.finance?.totalExpenses || 0)}</span>
+                  <span className="font-semibold text-red-600">{formatAmount(reportData?.finance?.totalExpenses || 0)}</span>
                 </div>
                 <div className="flex justify-between border-t pt-2">
                   <span className="text-gray-900 font-medium">Net Profit</span>
-                  <span className="font-bold text-blue-600">{formatCurrency(reportData?.finance?.netProfit || 0)}</span>
+                  <span className="font-bold text-blue-600">{formatAmount(reportData?.finance?.netProfit || 0)}</span>
                 </div>
                 <div className="mt-4 pt-4 border-t">
                   <p className="text-sm text-gray-500">
@@ -378,7 +379,7 @@ const ReportsPage: React.FC = () => {
                 </div>
                 <div className="flex justify-between items-center border-t pt-2">
                   <span className="text-sm text-gray-900 font-medium">Total Value</span>
-                  <span className="text-sm font-bold">{formatCurrency(reportData?.procurement?.totalValue || 0)}</span>
+                  <span className="text-sm font-bold">{formatAmount(reportData?.procurement?.totalValue || 0)}</span>
                 </div>
               </div>
             </div>
@@ -409,11 +410,11 @@ const ReportsPage: React.FC = () => {
               </div>
               <div className="bg-green-50 p-4 rounded-lg">
                 <h4 className="font-medium text-green-800">Average Salary</h4>
-                <p className="text-2xl font-bold text-green-900">{formatCurrency(reportData?.employees?.averageSalary || 0)}</p>
+                <p className="text-2xl font-bold text-green-900">{formatAmount(reportData?.employees?.averageSalary || 0)}</p>
               </div>
               <div className="bg-purple-50 p-4 rounded-lg">
                 <h4 className="font-medium text-purple-800">Total Salary Budget</h4>
-                <p className="text-2xl font-bold text-purple-900">{formatCurrency(reportData?.employees?.totalSalary || 0)}</p>
+                <p className="text-2xl font-bold text-purple-900">{formatAmount(reportData?.employees?.totalSalary || 0)}</p>
               </div>
             </div>
           </div>
@@ -429,13 +430,13 @@ const ReportsPage: React.FC = () => {
                   <div className="bg-green-50 p-3 rounded">
                     <div className="flex justify-between">
                       <span>Total Revenue</span>
-                      <span className="font-bold">{formatCurrency(reportData?.finance?.totalRevenue || 0)}</span>
+                      <span className="font-bold">{formatAmount(reportData?.finance?.totalRevenue || 0)}</span>
                     </div>
                   </div>
                   <div className="bg-red-50 p-3 rounded">
                     <div className="flex justify-between">
                       <span>Total Expenses</span>
-                      <span className="font-bold">{formatCurrency(reportData?.finance?.totalExpenses || 0)}</span>
+                      <span className="font-bold">{formatAmount(reportData?.finance?.totalExpenses || 0)}</span>
                     </div>
                   </div>
                 </div>
@@ -487,11 +488,11 @@ const ReportsPage: React.FC = () => {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span>Total Budget</span>
-                    <span className="font-bold">{formatCurrency(reportData?.procurement?.totalValue || 0)}</span>
+                    <span className="font-bold">{formatAmount(reportData?.procurement?.totalValue || 0)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Average per Request</span>
-                    <span className="font-bold">{reportData?.procurement?.total ? formatCurrency((reportData?.procurement?.totalValue || 0) / reportData.procurement.total) : formatCurrency(0)}</span>
+                    <span className="font-bold">{reportData?.procurement?.total ? formatAmount((reportData?.procurement?.totalValue || 0) / reportData.procurement.total) : formatAmount(0)}</span>
                   </div>
                 </div>
               </div>

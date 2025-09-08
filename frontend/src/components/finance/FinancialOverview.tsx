@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { financeService, FinancialSummary } from '../../services/financeService';
 
 interface FinancialOverviewProps {
@@ -6,6 +7,7 @@ interface FinancialOverviewProps {
 }
 
 const FinancialOverview: React.FC<FinancialOverviewProps> = ({ onNavigateToTab }) => {
+  const { formatAmount } = useCurrency();
   const [summary, setSummary] = useState<FinancialSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,14 +29,6 @@ const FinancialOverview: React.FC<FinancialOverviewProps> = ({ onNavigateToTab }
 
     fetchSummary();
   }, []);
-
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 2,
-    }).format(amount);
-  };
 
   if (loading) {
     return (
@@ -75,7 +69,7 @@ const FinancialOverview: React.FC<FinancialOverviewProps> = ({ onNavigateToTab }
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Total Revenue</h3>
           <p className="text-3xl font-bold text-green-600">
-            {summary ? formatCurrency(summary.totalRevenue) : '₹0.00'}
+            {summary ? formatAmount(summary.totalRevenue) : formatAmount(0)}
           </p>
           <p className="text-sm text-gray-600">From all invoices</p>
         </div>
@@ -83,7 +77,7 @@ const FinancialOverview: React.FC<FinancialOverviewProps> = ({ onNavigateToTab }
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Paid Revenue</h3>
           <p className="text-3xl font-bold text-blue-600">
-            {summary ? formatCurrency(summary.paidRevenue) : '₹0.00'}
+            {summary ? formatAmount(summary.paidRevenue) : formatAmount(0)}
           </p>
           <p className="text-sm text-gray-600">From paid invoices</p>
         </div>
@@ -91,7 +85,7 @@ const FinancialOverview: React.FC<FinancialOverviewProps> = ({ onNavigateToTab }
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Total Expenses</h3>
           <p className="text-3xl font-bold text-red-600">
-            {summary ? formatCurrency(summary.totalExpenses) : '₹0.00'}
+            {summary ? formatAmount(summary.totalExpenses) : formatAmount(0)}
           </p>
           <p className="text-sm text-gray-600">Business expenses</p>
         </div>
@@ -101,7 +95,7 @@ const FinancialOverview: React.FC<FinancialOverviewProps> = ({ onNavigateToTab }
           <p className={`text-3xl font-bold ${
             summary && summary.netProfit >= 0 ? 'text-green-600' : 'text-red-600'
           }`}>
-            {summary ? formatCurrency(summary.netProfit) : '₹0.00'}
+            {summary ? formatAmount(summary.netProfit) : formatAmount(0)}
           </p>
           <p className="text-sm text-gray-600">Paid revenue - Expenses</p>
         </div>
@@ -174,7 +168,7 @@ const FinancialOverview: React.FC<FinancialOverviewProps> = ({ onNavigateToTab }
                 </span>
               </div>
               <p className="text-sm text-gray-600 mt-1">
-                {formatCurrency(summary.paidRevenue)} of {formatCurrency(summary.totalRevenue)} collected
+                {formatAmount(summary.paidRevenue)} of {formatAmount(summary.totalRevenue)} collected
               </p>
             </div>
             
@@ -199,7 +193,7 @@ const FinancialOverview: React.FC<FinancialOverviewProps> = ({ onNavigateToTab }
                 </span>
               </div>
               <p className="text-sm text-gray-600 mt-1">
-                {summary.netProfit >= 0 ? 'Profitable' : 'Loss'}: {formatCurrency(Math.abs(summary.netProfit))}
+                {summary.netProfit >= 0 ? 'Profitable' : 'Loss'}: {formatAmount(Math.abs(summary.netProfit))}
               </p>
             </div>
           </div>

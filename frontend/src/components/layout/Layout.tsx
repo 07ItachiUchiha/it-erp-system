@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '../../contexts/AuthContext';
 import RoleBasedComponent from '../auth/RoleBasedComponent';
 import Sidebar from '../dashboard/Sidebar';
+import CurrencySelector from '../common/CurrencySelector';
 import { 
   Home, 
   Users, 
@@ -93,7 +94,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       action: 'read'
     },
     { 
-      name: 'Inventory', 
+      name: 'Inventory Management', 
       href: '/inventory', 
       icon: Package,
       current: router.pathname === '/inventory',
@@ -188,8 +189,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   {router.pathname === '/notifications' && 'Notifications'}
                   {router.pathname === '/files' && 'File Management'}
                   {router.pathname === '/reports' && 'Reports & Analytics'}
-                  {router.pathname === '/advanced-inventory' && 'Advanced Inventory Management'}
-                  {router.pathname.includes('inventory') && !router.pathname.includes('advanced') && 'Inventory Management'}
+                  {router.pathname === '/inventory' && 'Inventory Management'}
                 </h1>
               </div>
               {user && (
@@ -206,6 +206,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     }`}>
                       {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                     </span>
+                  </div>
+                  <div className="w-48">
+                    <CurrencySelector showLabel={false} className="text-sm" />
                   </div>
                   <button
                     onClick={handleLogout}

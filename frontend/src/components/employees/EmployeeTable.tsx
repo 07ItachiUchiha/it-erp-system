@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { Employee } from '../../services/employeeService';
 import { 
   PencilIcon, 
@@ -64,6 +65,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
   onViewHR,
   loading = false,
 }) => {
+  const { formatAmount } = useCurrency();
   const [sortField, setSortField] = useState<keyof Employee>('firstName');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
@@ -258,7 +260,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                 <td className="px-6 py-4">
                   <div className="flex items-center text-sm text-gray-900">
                     <CurrencyDollarIcon className="w-4 h-4 mr-1 text-gray-400" />
-                    {employee.salary.toLocaleString()}
+                    {formatAmount(employee.salary)}
                   </div>
                 </td>
                 <td className="px-6 py-4">

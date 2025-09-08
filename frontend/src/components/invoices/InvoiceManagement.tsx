@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { financeService, Invoice } from '../../services/financeService';
 
 interface InvoiceFormData {
@@ -13,6 +14,7 @@ interface InvoiceFormData {
 }
 
 const InvoiceManagement: React.FC = () => {
+  const { formatAmount } = useCurrency();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -126,13 +128,6 @@ const InvoiceManagement: React.FC = () => {
   const getStatusColor = (status: string) => {
     const option = statusOptions.find(opt => opt.value === status);
     return option ? option.color : 'gray';
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR'
-    }).format(amount);
   };
 
   const formatDate = (dateString: string) => {
@@ -319,7 +314,7 @@ const InvoiceManagement: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatCurrency(invoice.amount)}
+                      {formatAmount(invoice.amount)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatDate(invoice.dueDate)}

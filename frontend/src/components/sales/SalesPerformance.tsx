@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import {
   LineChart,
   Line,
@@ -40,6 +41,7 @@ interface SalesPerformanceProps {
 }
 
 const SalesPerformance: React.FC<SalesPerformanceProps> = ({ onClose }) => {
+  const { formatAmount } = useCurrency();
   const [activeTab, setActiveTab] = useState('revenue');
   const [timeRange, setTimeRange] = useState('12months');
   const [loading, setLoading] = useState(false);
@@ -89,10 +91,6 @@ const SalesPerformance: React.FC<SalesPerformanceProps> = ({ onClose }) => {
 
   const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'];
 
-  const formatCurrency = (value: number) => {
-    return `₹${value.toLocaleString('en-IN')}`;
-  };
-
   const KPICard: React.FC<{
     title: string;
     value: string | number;
@@ -129,14 +127,14 @@ const SalesPerformance: React.FC<SalesPerformanceProps> = ({ onClose }) => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <KPICard
           title="Total Revenue"
-          value={formatCurrency(kpis.totalRevenue || 0)}
+          value={formatAmount(kpis.totalRevenue || 0)}
           change={12}
           icon={IndianRupee}
           color="bg-blue-500"
         />
         <KPICard
           title="Average Order Value"
-          value={formatCurrency(kpis.averageOrderValue || 0)}
+          value={formatAmount(kpis.averageOrderValue || 0)}
           change={8}
           icon={DollarSign}
           color="bg-green-500"
@@ -164,10 +162,10 @@ const SalesPerformance: React.FC<SalesPerformanceProps> = ({ onClose }) => {
           <AreaChart data={revenueData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="month" />
-            <YAxis tickFormatter={formatCurrency} />
+            <YAxis tickFormatter={(value: number) => formatAmount(value)} />
             <Tooltip 
               formatter={(value: number, name: string) => [
-                name === 'revenue' ? formatCurrency(value) : value,
+                name === 'revenue' ? formatAmount(value) : value,
                 name === 'revenue' ? 'Revenue' : name === 'target' ? 'Target' : 'Orders'
               ]}
             />
@@ -231,7 +229,7 @@ const SalesPerformance: React.FC<SalesPerformanceProps> = ({ onClose }) => {
         />
         <KPICard
           title="Pipeline Value"
-          value={formatCurrency(conversionData.reduce((sum, item) => sum + item.value, 0))}
+          value={formatAmount(conversionData.reduce((sum, item) => sum + item.value, 0))}
           change={18}
           icon={Zap}
           color="bg-purple-500"
@@ -250,7 +248,7 @@ const SalesPerformance: React.FC<SalesPerformanceProps> = ({ onClose }) => {
               <YAxis dataKey="stage" type="category" width={80} />
               <Tooltip 
                 formatter={(value: number, name: string) => [
-                  name === 'value' ? formatCurrency(value) : value,
+                  name === 'value' ? formatAmount(value) : value,
                   name === 'value' ? 'Value' : 'Count'
                 ]}
               />
@@ -273,7 +271,7 @@ const SalesPerformance: React.FC<SalesPerformanceProps> = ({ onClose }) => {
                   </div>
                   <div>
                     <span className="text-gray-600">Value:</span>
-                    <span className="ml-2 font-medium">{formatCurrency(item.value)}</span>
+                    <span className="ml-2 font-medium">{formatAmount(item.value)}</span>
                   </div>
                 </div>
                 {index < conversionData.length - 1 && (
@@ -370,7 +368,7 @@ const SalesPerformance: React.FC<SalesPerformanceProps> = ({ onClose }) => {
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value: number) => formatCurrency(value)} />
+              <Tooltip formatter={(value: number) => formatAmount(value)} />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -392,7 +390,7 @@ const SalesPerformance: React.FC<SalesPerformanceProps> = ({ onClose }) => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-medium">{formatCurrency(product.revenue)}</div>
+                  <div className="font-medium">{formatAmount(product.revenue)}</div>
                   <div className={`text-sm flex items-center ${
                     product.growth >= 0 ? 'text-green-600' : 'text-red-600'
                   }`}>

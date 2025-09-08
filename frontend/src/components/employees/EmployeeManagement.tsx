@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { 
   Employee, 
   CreateEmployeeDto, 
@@ -25,6 +26,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 const EmployeeManagement: React.FC = () => {
+  const { formatAmount } = useCurrency();
   // State management
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [paginatedData, setPaginatedData] = useState<PaginatedEmployees | null>(null);
@@ -327,7 +329,7 @@ const EmployeeManagement: React.FC = () => {
               </div>
               <div className="ml-4">
                 <p className="text-2xl font-semibold text-gray-900">
-                  ${statistics.averageSalary.toLocaleString()}
+                  {formatAmount(statistics.averageSalary)}
                 </p>
                 <p className="text-gray-600">Avg. Salary</p>
               </div>
