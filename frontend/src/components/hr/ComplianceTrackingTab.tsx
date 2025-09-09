@@ -140,7 +140,7 @@ const ComplianceTrackingTab: React.FC = () => {
     return due < today;
   };
 
-  const filteredItems = complianceItems.filter(item => {
+  const filteredItems = Array.isArray(complianceItems) ? complianceItems.filter(item => {
     switch (filter) {
       case 'pending':
         return item.status === 'PENDING' || item.status === 'IN_PROGRESS';
@@ -151,7 +151,7 @@ const ComplianceTrackingTab: React.FC = () => {
       default:
         return true;
     }
-  });
+  }) : [];
 
   if (loading) {
     return (

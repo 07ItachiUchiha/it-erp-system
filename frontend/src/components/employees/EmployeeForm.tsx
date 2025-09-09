@@ -341,11 +341,11 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
                   disabled={loadingOptions}
                 >
                   <option value="">Select Department</option>
-                  {departments.map((dept) => (
+                  {Array.isArray(departments) ? departments.map((dept) => (
                     <option key={dept.value} value={dept.value}>
                       {dept.label}
                     </option>
-                  ))}
+                  )) : null}
                 </select>
                 {errors.department && (
                   <p className="mt-1 text-sm text-red-600">{errors.department}</p>
@@ -371,11 +371,11 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
                     {loadingDesignations ? 'Loading designations...' : 
                      !formData.department ? 'Select department first' : 'Select Designation'}
                   </option>
-                  {designations.map((desig) => (
+                  {Array.isArray(designations) ? designations.map((desig) => (
                     <option key={desig.value} value={desig.value}>
                       {desig.label}
                     </option>
-                  ))}
+                  )) : null}
                 </select>
                 {errors.designation && (
                   <p className="mt-1 text-sm text-red-600">{errors.designation}</p>

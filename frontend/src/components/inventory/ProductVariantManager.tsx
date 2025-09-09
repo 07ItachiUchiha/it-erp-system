@@ -157,11 +157,11 @@ const ProductVariantManager: React.FC<ProductVariantManagerProps> = ({ parentIte
     setShowEditModal(true);
   };
 
-  const filteredVariants = variants.filter(variant =>
+  const filteredVariants = Array.isArray(variants) ? variants.filter(variant =>
     variant.variantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     variant.variantCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
     variant.sku?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ) : [];
 
   const getStockStatus = (variant: ProductVariant) => {
     if (variant.currentStock <= variant.minimumStock) {

@@ -55,7 +55,7 @@ class EmployeeStatsService {
   async calculateStatsFromEmployees(): Promise<EmployeeStats> {
     try {
       const employees = await this.getAllEmployees();
-      const activeEmployees = employees.filter(emp => emp.status === 'active');
+      const activeEmployees = Array.isArray(employees) ? employees.filter(emp => emp.status === 'active') : [];
       
       const departments: { [key: string]: number } = {};
       let totalSalary = 0;

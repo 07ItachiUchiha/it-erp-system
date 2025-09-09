@@ -185,7 +185,7 @@ const AttendanceTab: React.FC = () => {
                         </div>
                     </div>
                 ) : (
-                    attendances.map((attendance) => (
+                    Array.isArray(attendances) ? attendances.map((attendance) => (
                         <div key={attendance.id} className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow cursor-pointer">
                             <div 
                                 className="p-6"
@@ -254,7 +254,7 @@ const AttendanceTab: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                    ))
+                    )) : null
                 )}
             </div>
 

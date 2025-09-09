@@ -19,21 +19,21 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({
   const recentProjects = projects.slice(0, 5);
 
   // Get overdue tasks
-  const overdueTasks = tasks.filter(task => 
+  const overdueTasks = Array.isArray(tasks) ? tasks.filter(task => 
     task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'done'
-  ).slice(0, 5);
+  ).slice(0, 5) : [];
 
   // Get projects by status
-  const projectsByStatus = projects.reduce((acc, project) => {
+  const projectsByStatus = Array.isArray(projects) ? projects.reduce((acc, project) => {
     acc[project.status] = (acc[project.status] || 0) + 1;
     return acc;
-  }, {} as Record<string, number>);
+  }, {} as Record<string, number>) : {};
 
   // Get tasks by status
-  const tasksByStatus = tasks.reduce((acc, task) => {
+  const tasksByStatus = Array.isArray(tasks) ? tasks.reduce((acc, task) => {
     acc[task.status] = (acc[task.status] || 0) + 1;
     return acc;
-  }, {} as Record<string, number>);
+  }, {} as Record<string, number>) : {};
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
@@ -124,7 +124,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({
               </button>
             </div>
             <div className="space-y-4">
-              {recentProjects.length > 0 ? (
+              {Array.isArray(recentProjects) && recentProjects.length > 0 ? (
                 recentProjects.map((project) => (
                   <div key={project.id} className="border-l-4 border-blue-500 pl-4">
                     <div className="flex justify-between items-start">
@@ -209,7 +209,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({
             Project Progress Overview
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {projects.filter(p => p.status === 'in_progress').slice(0, 6).map((project) => (
+            {Array.isArray(projects) ? projects.filter(p => p.status === 'in_progress').slice(0, 6).map((project) => (
               <div key={project.id} className="bg-gray-50 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-sm font-medium text-gray-900 truncate">{project.name}</h4>
@@ -241,7 +241,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({
                   </div>
                 )}
               </div>
-            ))}
+            )) : null}
           </div>
         </div>
       </div>

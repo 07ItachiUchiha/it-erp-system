@@ -114,7 +114,7 @@ const ManufacturingOrderManager: React.FC = () => {
     return colors[priority] || 'text-gray-600';
   };
 
-  const filteredOrders = orders.filter(order => {
+  const filteredOrders = Array.isArray(orders) ? orders.filter(order => {
     const matchesSearch = 
       order.moNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.product?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -123,7 +123,7 @@ const ManufacturingOrderManager: React.FC = () => {
     const matchesPriority = filterPriority === 'all' || order.priority === filterPriority;
     
     return matchesSearch && matchesPriority;
-  });
+  }) : [];
 
   const renderDashboard = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
@@ -147,7 +147,7 @@ const ManufacturingOrderManager: React.FC = () => {
           <div className="ml-4">
             <h3 className="text-lg font-semibold text-gray-900">In Progress</h3>
             <p className="text-2xl font-bold text-green-600">
-              {orders.filter(o => o.status === 'in_progress').length}
+              {Array.isArray(orders) ? orders.filter(o => o.status === 'in_progress').length : 0}
             </p>
           </div>
         </div>
@@ -161,7 +161,7 @@ const ManufacturingOrderManager: React.FC = () => {
           <div className="ml-4">
             <h3 className="text-lg font-semibold text-gray-900">Completed</h3>
             <p className="text-2xl font-bold text-purple-600">
-              {orders.filter(o => o.status === 'completed').length}
+              {Array.isArray(orders) ? orders.filter(o => o.status === 'completed').length : 0}
             </p>
           </div>
         </div>

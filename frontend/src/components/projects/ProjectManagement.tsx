@@ -33,7 +33,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
   });
 
   // Filter projects based on search and filters
-  const filteredProjects = projects.filter(project => {
+  const filteredProjects = Array.isArray(projects) ? projects.filter(project => {
     const matchesSearch = 
       project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -42,7 +42,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     const matchesPriority = priorityFilter === 'all' || project.priority === priorityFilter;
     
     return matchesSearch && matchesStatus && matchesPriority;
-  });
+  }) : [];
 
   const handleCreateProject = async () => {
     try {
@@ -73,7 +73,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     try {
       setLoading(true);
       const updatedProject = await projectService.updateProject(selectedProject.id, selectedProject);
-      onProjectsChange(projects.map(project => project.id === selectedProject.id ? updatedProject : project));
+      onProjectsChange(Array.isArray(projects) ? projects.map(project => project.id === selectedProject.id ? updatedProject : project) : []);
       setShowEditModal(false);
       setSelectedProject(null);
     } catch (error) {
@@ -89,7 +89,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     try {
       setLoading(true);
       await projectService.deleteProject(projectId);
-      onProjectsChange(projects.filter(project => project.id !== projectId));
+      onProjectsChange(Array.isArray(projects) ? projects.filter(project => project.id !== projectId) : []);
     } catch (error) {
       console.error('Error deleting project:', error);
     } finally {

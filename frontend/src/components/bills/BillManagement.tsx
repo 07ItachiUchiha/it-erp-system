@@ -1109,7 +1109,7 @@ const BillManagement: React.FC = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                bills.map((bill) => (
+                Array.isArray(bills) ? bills.map((bill) => (
                   <TableRow key={bill.id}>
                     <TableCell className="font-medium">{bill.billNumber}</TableCell>
                     <TableCell>{getBillTypeDisplay(bill.billType)}</TableCell>
@@ -1228,7 +1228,7 @@ const BillManagement: React.FC = () => {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))
+                )) : null
               )}
             </TableBody>
           </Table>

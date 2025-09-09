@@ -101,7 +101,7 @@ const FilesPage: React.FC = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = file.originalName;
+      a.download = file.originalName || 'download';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -131,7 +131,7 @@ const FilesPage: React.FC = () => {
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+    if (!bytes || bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -151,18 +151,18 @@ const FilesPage: React.FC = () => {
     }
   };
 
-  const filteredFiles = files.filter(file => {
-    const matchesSearch = file.originalName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         file.category?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = filterType === '' || file.mimetype.startsWith(filterType);
+  const filteredFiles = Array.isArray(files) ? files.filter(file => {
+    const matchesSearch = (file.originalName?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+                         (file.category?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+    const matchesType = filterType === '' || (file.mimetype || '').startsWith(filterType);
     const matchesCategory = filterCategory === '' || file.category === filterCategory;
     
     return matchesSearch && matchesType && matchesCategory;
-  });
+  }) : [];
 
-  const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+  const totalSize = Array.isArray(files) ? files.reduce((sum, file) => sum + (file.size || 0), 0) : 0;
 
-  if (loading && files.length === 0) {
+  if (loading && (!files || files.length === 0)) {
     return (
       <Layout>
         <div className="flex justify-center items-center h-64">
@@ -214,7 +214,9 @@ const FilesPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-purple-600">Categories</p>
-                  <p className="text-2xl font-bold text-purple-900">{new Set(files.map(f => f.category).filter(Boolean)).size}</p>
+                  <p className="text-2xl font-bold text-purple-900">
+                    {Array.isArray(files) ? new Set(files.map(f => f.category).filter(Boolean)).size : 0}
+                  </p>
                 </div>
                 <div className="p-3 bg-purple-100 rounded-full">
                   <ArchiveBoxIcon className="h-6 w-6 text-purple-600" />
@@ -226,7 +228,7 @@ const FilesPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-orange-600">Recent Uploads</p>
-                  <p className="text-2xl font-bold text-orange-900">{files.filter(f => new Date(f.uploadedAt) > new Date(Date.now() - 7*24*60*60*1000)).length}</p>
+                  <p className="text-2xl font-bold text-orange-900">{Array.isArray(files) ? files.filter(f => f.uploadedAt && new Date(f.uploadedAt) > new Date(Date.now() - 7*24*60*60*1000)).length : 0}</p>
                 </div>
                 <div className="p-3 bg-orange-100 rounded-full">
                   <CloudArrowUpIcon className="h-6 w-6 text-orange-600" />
@@ -380,21 +382,21 @@ const FilesPage: React.FC = () => {
                   <div className="flex items-start justify-between">
                     <div className="flex items-start space-x-3 flex-1">
                       <div className="flex-shrink-0">
-                        {getFileIcon(file.mimetype)}
+                        {getFileIcon(file.mimetype || '')}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">
-                          {file.originalName}
+                          {file.originalName || 'Unnamed file'}
                         </p>
                         <div className="mt-1 flex items-center space-x-2">
                           {file.category && (
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getCategoryBadgeColor(file.category)}`}>
-                              {file.category.replace('_', ' ')}
+                              {(file.category || '').replace('_', ' ')}
                             </span>
                           )}
                         </div>
                         <p className="text-xs text-gray-500 mt-1">
-                          {formatFileSize(file.size)} • {new Date(file.uploadedAt).toLocaleDateString('en-IN')}
+                          {formatFileSize(file.size || 0)} • {file.uploadedAt ? new Date(file.uploadedAt).toLocaleDateString('en-IN') : 'Unknown date'}
                         </p>
                       </div>
                     </div>

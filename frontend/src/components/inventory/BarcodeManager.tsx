@@ -102,7 +102,7 @@ const BarcodeManager: React.FC = () => {
     }
   };
 
-  const filteredBarcodes = barcodes.filter(barcode => {
+  const filteredBarcodes = Array.isArray(barcodes) ? barcodes.filter(barcode => {
     const matchesSearch = 
       barcode.barcodeValue.toLowerCase().includes(searchTerm.toLowerCase()) ||
       barcode.description?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -111,7 +111,7 @@ const BarcodeManager: React.FC = () => {
     const matchesBarcodeType = filterBarcodeType === 'all' || barcode.barcodeType === filterBarcodeType;
     
     return matchesSearch && matchesType && matchesBarcodeType;
-  });
+  }) : [];
 
   const getBarcodeTypeColor = (type: string) => {
     const colors: Record<string, string> = {
