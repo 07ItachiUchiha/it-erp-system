@@ -144,8 +144,8 @@ const ExpenseManagement: React.FC = () => {
   };
 
   const filteredExpenses = filterCategory 
-    ? expenses.filter(expense => expense.category === filterCategory)
-    : expenses;
+    ? (Array.isArray(expenses) ? expenses.filter(expense => expense.category === filterCategory) : [])
+    : (Array.isArray(expenses) ? expenses : []);
 
   const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
 

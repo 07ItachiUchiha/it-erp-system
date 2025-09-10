@@ -78,14 +78,14 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
     }
   };
 
-  const sortedEmployees = [...employees].sort((a, b) => {
+  const sortedEmployees = Array.isArray(employees) ? [...employees].sort((a, b) => {
     const aValue = a[sortField];
     const bValue = b[sortField];
     
     if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
     if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
     return 0;
-  });
+  }) : [];
 
   const SortIcon = ({ field }: { field: keyof Employee }) => {
     if (sortField !== field) {
@@ -107,7 +107,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
     );
   }
 
-  if (employees.length === 0) {
+  if (!Array.isArray(employees) || employees.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow p-12 text-center">
         <UserIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -126,7 +126,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
               <th className="px-6 py-3 text-left">
                 <input
                   type="checkbox"
-                  checked={selectedEmployees.length === employees.length && employees.length > 0}
+                  checked={Array.isArray(employees) && selectedEmployees.length === employees.length && employees.length > 0}
                   onChange={onSelectAll}
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
@@ -260,7 +260,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                 <td className="px-6 py-4">
                   <div className="flex items-center text-sm text-gray-900">
                     <CurrencyDollarIcon className="w-4 h-4 mr-1 text-gray-400" />
-                    {formatAmount(employee.salary)}
+                    {formatAmount(employee.salary || 0)}
                   </div>
                 </td>
                 <td className="px-6 py-4">

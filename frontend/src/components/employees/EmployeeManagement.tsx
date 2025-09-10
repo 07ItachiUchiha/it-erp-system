@@ -71,11 +71,12 @@ const EmployeeManagement: React.FC = () => {
       
       const result = await employeeService.searchEmployees(filters);
       setPaginatedData(result);
-      setEmployees(result.data);
+      setEmployees(result.data || []);
       
       // Extract unique departments and designations for filters
-      const uniqueDepartments = Array.from(new Set(result.data.map(emp => emp.department)));
-      const uniqueDesignations = Array.from(new Set(result.data.map(emp => emp.designation)));
+      const employeeData = Array.isArray(result.data) ? result.data : [];
+      const uniqueDepartments = Array.from(new Set(employeeData.map(emp => emp.department).filter(Boolean)));
+      const uniqueDesignations = Array.from(new Set(employeeData.map(emp => emp.designation).filter(Boolean)));
       setDepartments(uniqueDepartments);
       setDesignations(uniqueDesignations);
       
@@ -192,8 +193,9 @@ const EmployeeManagement: React.FC = () => {
   };
 
   const handleSelectAll = () => {
+    const employeeList = Array.isArray(employees) ? employees : [];
     setSelectedEmployees(
-      selectedEmployees.length === employees.length ? [] : employees.map(emp => emp.id)
+      selectedEmployees.length === employeeList.length ? [] : employeeList.map(emp => emp.id)
     );
   };
 
@@ -290,7 +292,7 @@ const EmployeeManagement: React.FC = () => {
                 <UsersIcon className="w-6 h-6 text-blue-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">{statistics.total}</p>
+                <p className="text-2xl font-semibold text-gray-900">{statistics?.total || 0}</p>
                 <p className="text-gray-600">Total Employees</p>
               </div>
             </div>
@@ -302,7 +304,7 @@ const EmployeeManagement: React.FC = () => {
                 <ChartBarIcon className="w-6 h-6 text-green-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">{statistics.active}</p>
+                <p className="text-2xl font-semibold text-gray-900">{statistics?.active || 0}</p>
                 <p className="text-gray-600">Active Employees</p>
               </div>
             </div>
@@ -315,7 +317,7 @@ const EmployeeManagement: React.FC = () => {
               </div>
               <div className="ml-4">
                 <p className="text-2xl font-semibold text-gray-900">
-                  {statistics.departmentDistribution.length}
+                  {statistics?.departmentDistribution?.length || 0}
                 </p>
                 <p className="text-gray-600">Departments</p>
               </div>
@@ -329,7 +331,7 @@ const EmployeeManagement: React.FC = () => {
               </div>
               <div className="ml-4">
                 <p className="text-2xl font-semibold text-gray-900">
-                  {formatAmount(statistics.averageSalary)}
+                  {formatAmount(statistics?.averageSalary || 0)}
                 </p>
                 <p className="text-gray-600">Avg. Salary</p>
               </div>
@@ -372,11 +374,11 @@ const EmployeeManagement: React.FC = () => {
         <div className="flex items-center justify-between bg-white px-6 py-3 border border-gray-200 rounded-lg">
           <div className="flex items-center gap-4">
             <p className="text-sm text-gray-700">
-              Showing <span className="font-medium">{((paginatedData.page - 1) * paginatedData.limit) + 1}</span> to{' '}
+              Showing <span className="font-medium">{paginatedData ? ((paginatedData.page - 1) * paginatedData.limit) + 1 : 0}</span> to{' '}
               <span className="font-medium">
-                {Math.min(paginatedData.page * paginatedData.limit, paginatedData.total)}
+                {paginatedData ? Math.min(paginatedData.page * paginatedData.limit, paginatedData.total) : 0}
               </span> of{' '}
-              <span className="font-medium">{paginatedData.total}</span> results
+              <span className="font-medium">{paginatedData?.total || 0}</span> results
             </p>
             <select
               value={filters.limit}

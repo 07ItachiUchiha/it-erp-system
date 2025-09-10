@@ -299,7 +299,7 @@ const InvoiceManagement: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {invoices.map((invoice) => (
+                {Array.isArray(invoices) ? invoices.map((invoice) => (
                   <tr key={invoice.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
@@ -345,7 +345,7 @@ const InvoiceManagement: React.FC = () => {
                       </div>
                     </td>
                   </tr>
-                ))}
+                )) : null}
               </tbody>
             </table>
           </div>

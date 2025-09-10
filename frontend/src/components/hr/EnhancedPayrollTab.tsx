@@ -373,11 +373,11 @@ const EnhancedPayrollTab: React.FC = () => {
                 required
               >
                 <option value="">Select Employee</option>
-                {employees.map((employee) => (
+                {Array.isArray(employees) ? employees.map((employee) => (
                   <option key={employee.id} value={employee.id}>
                     {employee.firstName} {employee.lastName} ({employee.empId})
                   </option>
-                ))}
+                )) : null}
               </select>
             </div>
 

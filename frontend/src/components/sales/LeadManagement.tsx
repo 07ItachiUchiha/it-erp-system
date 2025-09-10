@@ -77,7 +77,7 @@ const LeadManagement: React.FC<LeadManagementProps> = ({
     try {
       setLoading(true);
       const updatedLead = await salesService.updateLead(selectedLead.id, selectedLead);
-      onLeadsChange(leads.map(lead => lead.id === selectedLead.id ? updatedLead : lead));
+      onLeadsChange(Array.isArray(leads) ? leads.map(lead => lead.id === selectedLead.id ? updatedLead : lead) : []);
       setShowEditModal(false);
       setSelectedLead(null);
     } catch (error) {

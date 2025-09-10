@@ -62,7 +62,7 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
   };
 
   const formatAmount = (amount: number, showSymbol: boolean = true, precision: number = 2): string => {
-    if (isNaN(amount)) return '0.00';
+    if (amount === null || amount === undefined || isNaN(amount)) return showSymbol ? `${currentCurrency.symbol} 0.00` : '0.00';
     
     const formattedAmount = amount.toLocaleString('en-IN', {
       minimumFractionDigits: precision,

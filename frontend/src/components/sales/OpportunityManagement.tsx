@@ -75,7 +75,7 @@ const OpportunityManagement: React.FC<OpportunityManagementProps> = ({
     try {
       setLoading(true);
       const updatedOpportunity = await salesService.updateOpportunity(selectedOpportunity.id, selectedOpportunity);
-      onOpportunitiesChange(opportunities.map(opp => opp.id === selectedOpportunity.id ? updatedOpportunity : opp));
+      onOpportunitiesChange(Array.isArray(opportunities) ? opportunities.map(opp => opp.id === selectedOpportunity.id ? updatedOpportunity : opp) : []);
       setShowEditModal(false);
       setSelectedOpportunity(null);
     } catch (error) {

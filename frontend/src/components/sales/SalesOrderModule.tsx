@@ -85,10 +85,10 @@ const SalesOrderModule: React.FC = () => {
 
   const loadStats = () => {
     const allOrders = SalesOrderStorageService.getAllSalesOrders();
-    const totalOrders = allOrders.length;
-    const processingOrders = allOrders.filter((order: any) => order.status === 'processing').length;
-    const readyToShipOrders = allOrders.filter((order: any) => order.status === 'ready-to-ship').length;
-    const totalValue = allOrders.reduce((sum: number, order: any) => sum + (order.total || 0), 0);
+    const totalOrders = Array.isArray(allOrders) ? allOrders.length : 0;
+    const processingOrders = Array.isArray(allOrders) ? allOrders.filter((order: any) => order.status === 'processing').length : 0;
+    const readyToShipOrders = Array.isArray(allOrders) ? allOrders.filter((order: any) => order.status === 'ready-to-ship').length : 0;
+    const totalValue = Array.isArray(allOrders) ? allOrders.reduce((sum: number, order: any) => sum + (order.total || 0), 0) : 0;
 
     setStats({
       totalOrders,
@@ -419,7 +419,7 @@ const SalesOrderModule: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {salesOrders.map((order) => (
+                {Array.isArray(salesOrders) ? salesOrders.map((order) => (
                   <tr key={order.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -497,7 +497,7 @@ const SalesOrderModule: React.FC = () => {
                       </div>
                     </td>
                   </tr>
-                ))}
+                )) : null}
               </tbody>
             </table>
           </div>

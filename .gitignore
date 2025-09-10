@@ -16,6 +16,7 @@ out/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.production
 
 # IDE and editor files
 .vscode/
@@ -72,3 +73,49 @@ yarn.lock
 
 # Docker
 .dockerignore
+
+
+#Ngrok
+ngrok.yml
+ngrok.log
+# Ignore ngrok tunnel URLs
+*.ngrok-free.app
+# Ignore files containing ngrok URLs
+*ngrok*.txt
+*ngrok*.md
+# Ignore files containing sensitive information
+*ngrok*.env
+*ngrok*.json
+# Ignore files containing ngrok URLs in any format
+*ngrok*.config
+*ngrok*.cfg
+# Ignore files containing ngrok URLs in documentation or notes
+*ngrok*.doc
+*ngrok*.note
+# Ignore files containing ngrok URLs in scripts or code
+*ngrok*.sh
+*ngrok*.ts
+*ngrok*.js
+*ngrok*.py
+# Ignore files containing ngrok URLs in logs or reports
+*ngrok*.log
+*ngrok*.report
+# Ignore files containing ngrok URLs in backups or archives
+*ngrok*.bak
+*ngrok*.zip
+*ngrok*.tar
+# Ignore files containing ngrok URLs in temporary or cache files
+*ngrok*.tmp
+*ngrok*.cache
+# Ignore files containing ngrok URLs in any other context
+*ngrok*.*
+# Ignore files containing specific ngrok tunnel URLs
+*977a18aeba18*
+*0db6d135292e*
+*c5bcfb11bd15*
+*49f3b8fbb4e1*
+*e3f1c6d1a4b2*
+*fb4e2d6c3a7f*
+*2a1b3c4d5e6f*
+*1a2b3c4d5e6f*
+*3c4d5e6f7a8b*

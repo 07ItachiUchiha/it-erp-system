@@ -35,7 +35,7 @@ const TaskManagement: React.FC<TaskManagementProps> = ({
   });
 
   // Filter tasks based on search and filters
-  const filteredTasks = tasks.filter(task => {
+  const filteredTasks = Array.isArray(tasks) ? tasks.filter(task => {
     const matchesSearch = 
       task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (task.description && task.description.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -45,7 +45,7 @@ const TaskManagement: React.FC<TaskManagementProps> = ({
     const matchesProject = projectFilter === 'all' || task.projectId === projectFilter;
     
     return matchesSearch && matchesStatus && matchesPriority && matchesProject;
-  });
+  }) : [];
 
   const handleCreateTask = async () => {
     try {
@@ -75,7 +75,7 @@ const TaskManagement: React.FC<TaskManagementProps> = ({
     try {
       setLoading(true);
       const updatedTask = await projectService.updateTask(selectedTask.id, selectedTask);
-      onTasksChange(tasks.map(task => task.id === selectedTask.id ? updatedTask : task));
+      onTasksChange(Array.isArray(tasks) ? tasks.map(task => task.id === selectedTask.id ? updatedTask : task) : []);
       setShowEditModal(false);
       setSelectedTask(null);
     } catch (error) {
@@ -91,7 +91,7 @@ const TaskManagement: React.FC<TaskManagementProps> = ({
     try {
       setLoading(true);
       await projectService.deleteTask(taskId);
-      onTasksChange(tasks.filter(task => task.id !== taskId));
+      onTasksChange(Array.isArray(tasks) ? tasks.filter(task => task.id !== taskId) : []);
     } catch (error) {
       console.error('Error deleting task:', error);
     } finally {
@@ -185,11 +185,11 @@ const TaskManagement: React.FC<TaskManagementProps> = ({
             className="px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="all">All Projects</option>
-            {projects.map(project => (
+            {Array.isArray(projects) ? projects.map(project => (
               <option key={project.id} value={project.id}>
                 {project.name}
               </option>
-            ))}
+            )) : null}
           </select>
         </div>
         
@@ -322,11 +322,11 @@ const TaskManagement: React.FC<TaskManagementProps> = ({
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">Select Project</option>
-                    {projects.map(project => (
+                    {Array.isArray(projects) ? projects.map(project => (
                       <option key={project.id} value={project.id}>
                         {project.name}
                       </option>
-                    ))}
+                    )) : null}
                   </select>
                 </div>
                 <div>
