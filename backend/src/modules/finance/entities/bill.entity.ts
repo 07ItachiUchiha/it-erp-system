@@ -1,5 +1,61 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 
+// Customer Address Entity for Bill To/Ship To management
+@Entity('customer_addresses')
+export class CustomerAddress {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column({ length: 200 })
+  customerId: string; // Customer identifier
+
+  @Column({
+    type: 'enum',
+    enum: ['billing', 'shipping', 'both'],
+    default: 'both'
+  })
+  addressType: 'billing' | 'shipping' | 'both';
+
+  @Column({ length: 200, nullable: true })
+  contactName: string;
+
+  @Column({ length: 200, nullable: true })
+  companyName: string;
+
+  @Column('text')
+  address: string;
+
+  @Column({ length: 100 })
+  city: string;
+
+  @Column({ length: 100 })
+  state: string;
+
+  @Column({ length: 10 })
+  pincode: string;
+
+  @Column({ length: 100, default: 'India' })
+  country: string;
+
+  @Column({ length: 15, nullable: true })
+  gstin: string;
+
+  @Column({ default: false })
+  isDefault: boolean;
+
+  @Column({ default: true })
+  isActive: boolean;
+
+  @Column({ type: 'uuid', nullable: true })
+  createdBy: string;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+}
+
 @Entity('bills')
 export class Bill {
   @PrimaryGeneratedColumn('uuid')
@@ -201,7 +257,7 @@ export class BillPayment {
   updatedAt: Date;
 }
 
-// Legacy entities for backward compatibility
+// Enhanced Invoice entity with new features
 @Entity('invoices')
 export class Invoice {
   @PrimaryGeneratedColumn('uuid')
@@ -209,6 +265,60 @@ export class Invoice {
 
   @Column({ unique: true })
   invoiceNumber: string;
+
+  // Bill To Information
+  @Column({ nullable: true })
+  billToName: string;
+
+  @Column('text', { nullable: true })
+  billToAddress: string;
+
+  @Column({ nullable: true, length: 15 })
+  billToGSTIN: string;
+
+  // Ship To Information  
+  @Column('text', { nullable: true })
+  shipToAddress: string;
+
+  // Financial Calculations
+  @Column('decimal', { precision: 12, scale: 2, default: 0 })
+  shippingCharges: number;
+
+  @Column('decimal', { precision: 5, scale: 2, default: 18.00 })
+  taxRate: number;
+
+  @Column({ default: true })
+  isTaxOptional: boolean;
+
+  // GST Breakdown
+  @Column('jsonb', { nullable: true })
+  gstBreakup: {
+    cgst: number;
+    sgst: number;
+    igst: number;
+    utgst?: number; // For union territories
+  };
+
+  // Auto-generated Invoice Number
+  @Column({ unique: true, nullable: true })
+  generatedInvoiceNumber: string; // Format: INV-YYYYMMDD-XXXX
+
+  // Audit Fields for GST Override
+  @Column({ type: 'uuid', nullable: true })
+  gstOverriddenBy: string;
+
+  @Column({ nullable: true })
+  gstOverrideReason: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  gstOverriddenAt: Date;
+
+  // Enhanced totals
+  @Column('decimal', { precision: 12, scale: 2, default: 0 })
+  subtotal: number;
+
+  @Column('decimal', { precision: 12, scale: 2, default: 0 })
+  calculatedTotal: number;
 
   @Column()
   clientName: string;
@@ -227,6 +337,21 @@ export class Invoice {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  // Computed properties
+  get calculatedTotalWithTax(): number {
+    const subtotal = this.subtotal || 0;
+    const shipping = this.shippingCharges || 0;
+    const taxAmount = this.isTaxOptional ? this.calculateTaxAmount() : 0;
+    return subtotal + shipping + taxAmount;
+  }
+
+  // GST calculation based on breakdown
+  private calculateTaxAmount(): number {
+    if (!this.gstBreakup) return 0;
+    const { cgst, sgst, igst, utgst } = this.gstBreakup;
+    return (cgst || 0) + (sgst || 0) + (igst || 0) + (utgst || 0);
+  }
 }
 
 @Entity('expenses')

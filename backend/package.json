@@ -43,6 +43,7 @@
     "@types/multer": "^2.0.0",
     "@types/nodemailer": "^7.0.1",
     "@types/puppeteer": "^5.4.7",
+    "@types/xlsx": "^0.0.35",
     "apollo-server-express": "^3.12.1",
     "aws-sdk": "^2.1450.0",
     "bcrypt": "^5.1.1",
@@ -62,7 +63,8 @@
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
     "typeorm": "^0.3.26",
-    "uuid": "^9.0.0"
+    "uuid": "^9.0.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",

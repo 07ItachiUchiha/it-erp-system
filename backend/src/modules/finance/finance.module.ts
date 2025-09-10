@@ -3,9 +3,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { FinanceService } from './finance.service';
 import { FinanceController } from './finance.controller';
 import { Invoice, Expense } from './entities/finance.entity';
-import { Bill, BillItem, BillPayment } from './entities/bill.entity';
+import { Bill, BillItem, BillPayment, CustomerAddress } from './entities/bill.entity';
 import { BillService } from './services/bill.service';
 import { PdfService } from './services/pdf.service';
+import { GSTCalculationService } from './services/gst-calculation.service';
+import { InvoiceExportService } from './services/invoice-export.service';
+import { CustomerAddressService } from './services/customer-address.service';
 import { BillController } from './controllers/bill.controller';
 
 @Module({
@@ -15,7 +18,8 @@ import { BillController } from './controllers/bill.controller';
       Expense, 
       Bill, 
       BillItem, 
-      BillPayment
+      BillPayment,
+      CustomerAddress
     ])
   ],
   controllers: [
@@ -25,7 +29,10 @@ import { BillController } from './controllers/bill.controller';
   providers: [
     FinanceService,
     BillService,
-    PdfService
+    PdfService,
+    GSTCalculationService,
+    InvoiceExportService,
+    CustomerAddressService
   ],
   exports: [
     FinanceService,
