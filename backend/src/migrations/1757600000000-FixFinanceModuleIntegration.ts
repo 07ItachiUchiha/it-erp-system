@@ -16,6 +16,7 @@ export class FixFinanceModuleIntegration1757600000000 implements MigrationInterf
           "category" character varying NOT NULL,
           "vendor" character varying,
           "amount" numeric(10,2) NOT NULL,
+          "gstAmount" numeric(10,2) NOT NULL DEFAULT 0,
           "date" date NOT NULL,
           "status" character varying NOT NULL DEFAULT 'pending',
           "receiptUrl" character varying,
@@ -46,6 +47,11 @@ export class FixFinanceModuleIntegration1757600000000 implements MigrationInterf
       if (!hasNotesColumn) {
         await queryRunner.query(`ALTER TABLE "expenses" ADD "notes" text`);
       }
+
+      const hasGstAmountColumn = await queryRunner.hasColumn('expenses', 'gstAmount');
+      if (!hasGstAmountColumn) {
+        await queryRunner.query(`ALTER TABLE "expenses" ADD "gstAmount" numeric(10,2) NOT NULL DEFAULT 0`);
+      }
     }
 
     // Check if bills table exists, if not create it
@@ -61,6 +67,7 @@ export class FixFinanceModuleIntegration1757600000000 implements MigrationInterf
           "vendorEmail" character varying,
           "description" text,
           "amount" numeric(10,2) NOT NULL,
+          "gstAmount" numeric(10,2) NOT NULL DEFAULT 0,
           "tax" numeric(10,2) NOT NULL DEFAULT 0,
           "discount" numeric(10,2) NOT NULL DEFAULT 0,
           "finalAmount" numeric(10,2) NOT NULL,

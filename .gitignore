@@ -152,3 +152,9 @@ Details.md
 errors.md
 docs/*.md
 backend/test/contracts/**/*.ts
+backend/test/finance-api.contract.spec.ts
+backend/check-enums.ts
+backend/test-finance-manual.js
+backend/src/test/finance-integration.spec.ts
+backend/test/finance-integration.spec.ts
+backendTerminalErrors.md

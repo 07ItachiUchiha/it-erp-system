@@ -11,8 +11,8 @@ export class Invoice {
   @Column()
   clientName: string;
 
-  @Column({ nullable: true })
-  clientEmail?: string;
+  @Column({ nullable: false })
+  clientEmail: string;
 
   @Column({ type: 'text', nullable: true })
   description?: string;
@@ -23,17 +23,23 @@ export class Invoice {
   @Column('decimal', { precision: 10, scale: 2, default: 0 })
   tax: number;
 
+  @Column('decimal', { precision: 10, scale: 2 })
+  total: number;
+
   @Column('decimal', { precision: 10, scale: 2, default: 0 })
   discount: number;
 
   @Column('decimal', { precision: 10, scale: 2 })
   finalAmount: number;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'timestamp' })
   dueDate: string;
 
-  @Column({ default: 'pending' })
-  status: string; // pending, paid, overdue, draft, cancelled
+  @Column({ default: 'draft' })
+  status: string; // draft, sent, paid, overdue, cancelled
+
+  @Column({ type: 'uuid' })
+  createdBy: string;
 
   @Column('json', { nullable: true })
   items?: any[];
@@ -74,14 +80,71 @@ export class Expense {
   @Column('decimal', { precision: 10, scale: 2 })
   amount: number;
 
-  @Column({ type: 'date' })
-  date: string;
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  gstAmount: number;
+
+  @Column({ type: 'timestamp', name: 'expenseDate' })
+  expenseDate: string;
 
   @Column({ default: 'pending' })
   status: string; // pending, approved, rejected
 
+  @Column({ type: 'uuid' })
+  submittedBy: string;
+
   @Column({ nullable: true })
   receiptUrl?: string;
+
+  @Column({ type: 'text', nullable: true })
+  notes?: string;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+}
+
+@Entity('bills')
+export class Bill {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column({ unique: true })
+  billNumber: string;
+
+  @Column()
+  vendorName: string;
+
+  @Column({ nullable: true })
+  vendorEmail?: string;
+
+  @Column({ type: 'text', nullable: true })
+  description?: string;
+
+  @Column('decimal', { precision: 10, scale: 2 })
+  amount: number;
+
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  gstAmount: number;
+
+  @Column({ type: 'timestamp' })
+  billDate: string;
+
+  @Column({ type: 'timestamp' })
+  dueDate: string;
+
+  @Column({ default: 'pending' })
+  status: string; // pending, paid, overdue, cancelled
+
+  @Column({ type: 'timestamp', nullable: true })
+  paidDate?: string;
+
+  @Column({ type: 'uuid' })
+  createdBy: string;
+
+  @Column('json', { nullable: true })
+  items?: any[];
 
   @Column({ type: 'text', nullable: true })
   notes?: string;

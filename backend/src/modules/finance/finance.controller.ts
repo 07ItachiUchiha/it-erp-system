@@ -2,13 +2,16 @@ import {
   Controller, 
   Get, 
   Post, 
+  Put,
   Body, 
   Param, 
   Delete, 
   Patch, 
   UseGuards,
   Query,
-  ParseUUIDPipe
+  ParseUUIDPipe,
+  HttpCode,
+  HttpStatus
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { FinanceService } from './finance.service';
@@ -21,6 +24,20 @@ import { RolesGuard } from '../../guards/roles.guard';
 @UseGuards(JwtAuthGuard)
 export class FinanceController {
   constructor(private readonly financeService: FinanceService) {}
+
+  // ==============================
+  // DASHBOARD/SUMMARY ENDPOINTS
+  // ==============================
+
+  @Get('summary')
+  getFinancialSummary() {
+    return this.financeService.getFinancialSummary();
+  }
+
+  @Get('dashboard')
+  getDashboard() {
+    return this.financeService.getDashboard();
+  }
 
   // ==============================
   // INVOICE ENDPOINTS (Unified)
@@ -74,7 +91,16 @@ export class FinanceController {
     return this.financeService.updateInvoice(id, updateInvoiceDto);
   }
 
+  @Put('invoices/:id')
+  updateInvoiceWithPut(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateInvoiceDto: any,
+  ) {
+    return this.financeService.updateInvoice(id, updateInvoiceDto);
+  }
+
   @Delete('invoices/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   deleteInvoice(@Param('id', ParseUUIDPipe) id: string) {
     return this.financeService.deleteInvoice(id);
   }
@@ -139,9 +165,114 @@ export class FinanceController {
     return this.financeService.updateExpense(id, updateExpenseDto);
   }
 
+  @Put('expenses/:id')
+  updateExpenseWithPut(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateExpenseDto: any,
+  ) {
+    return this.financeService.updateExpense(id, updateExpenseDto);
+  }
+
   @Delete('expenses/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   deleteExpense(@Param('id', ParseUUIDPipe) id: string) {
     return this.financeService.deleteExpense(id);
+  }
+
+  // ==============================
+  // BILL ENDPOINTS
+  // ==============================
+
+  @Post('bills')
+  createBill(@Body() createBillDto: any) {
+    return this.financeService.createBill(createBillDto);
+  }
+
+  @Get('bills')
+  findAllBills(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Query('search') search?: string,
+    @Query('status') status?: string,
+  ) {
+    return this.financeService.findAllBills(+page, +limit, search, status);
+  }
+
+  @Get('bills/:id')
+  findBillById(@Param('id', ParseUUIDPipe) id: string) {
+    return this.financeService.findBillById(id);
+  }
+
+  @Patch('bills/:id')
+  updateBill(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateBillDto: any,
+  ) {
+    return this.financeService.updateBill(id, updateBillDto);
+  }
+
+  @Put('bills/:id')
+  updateBillWithPut(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateBillDto: any,
+  ) {
+    return this.financeService.updateBill(id, updateBillDto);
+  }
+
+  @Delete('bills/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteBill(@Param('id', ParseUUIDPipe) id: string) {
+    return this.financeService.deleteBill(id);
+  }
+
+  // ==============================
+  // GST MANAGEMENT ENDPOINTS
+  // ==============================
+
+  @Get('gst/configurations')
+  getGSTConfigurations() {
+    return this.financeService.getGSTConfigurations();
+  }
+
+  @Post('gst/configurations')
+  createGSTConfiguration(@Body() createGSTConfigDto: any) {
+    return this.financeService.createGSTConfiguration(createGSTConfigDto);
+  }
+
+  // ==============================
+  // EXPORT MANAGEMENT ENDPOINTS
+  // ==============================
+
+  @Post('export')
+  createExportJob(@Body() exportData: any) {
+    return this.financeService.createExportJob(exportData);
+  }
+
+  @Get('export/:id/status')
+  getExportStatus(@Param('id', ParseUUIDPipe) id: string) {
+    return this.financeService.getExportStatus(id);
+  }
+
+  @Get('export/history')
+  getExportHistory(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+  ) {
+    return this.financeService.getExportHistory(+page, +limit);
+  }
+
+  // ==============================
+  // PRINT MANAGEMENT ENDPOINTS
+  // ==============================
+
+  @Post('print')
+  createPrintJob(@Body() printData: any) {
+    return this.financeService.createPrintJob(printData);
+  }
+
+  @Get('print/:id/status')
+  getPrintJobStatus(@Param('id', ParseUUIDPipe) id: string) {
+    return this.financeService.getPrintJobStatus(id);
   }
 
   // ==============================
@@ -266,7 +397,7 @@ export class FinanceController {
   }
 
   @Get('print/jobs/:id')
-  getPrintJobStatus(@Param('id') id: string) {
+  getPrintJob(@Param('id') id: string) {
     return {
       jobId: id,
       status: 'completed',
