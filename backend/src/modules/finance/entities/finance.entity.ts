@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 
 @Entity('invoices')
 export class Invoice {
@@ -14,8 +14,20 @@ export class Invoice {
   @Column({ nullable: true })
   clientEmail?: string;
 
+  @Column({ type: 'text', nullable: true })
+  description?: string;
+
   @Column('decimal', { precision: 10, scale: 2 })
   amount: number;
+
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  tax: number;
+
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  discount: number;
+
+  @Column('decimal', { precision: 10, scale: 2 })
+  finalAmount: number;
 
   @Column({ type: 'date' })
   dueDate: string;
@@ -25,6 +37,15 @@ export class Invoice {
 
   @Column('json', { nullable: true })
   items?: any[];
+
+  @Column('jsonb', { nullable: true })
+  gstInfo?: {
+    cgst: number;
+    sgst: number;
+    igst: number;
+    totalGst: number;
+    hsnCode?: string;
+  };
 
   @Column({ type: 'text', nullable: true })
   notes?: string;

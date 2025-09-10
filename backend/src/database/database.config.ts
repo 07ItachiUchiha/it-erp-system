@@ -10,8 +10,8 @@ export const databaseConfig = (configService: ConfigService): TypeOrmModuleOptio
   database: configService.get('DB_NAME', 'erp_system'),
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
   migrations: [__dirname + '/../migrations/*{.ts,.js}'],
-  synchronize: configService.get('NODE_ENV') !== 'production', // Auto-create tables in development
-  migrationsRun: configService.get('NODE_ENV') === 'production', // Run migrations in production
+  synchronize: false, // Always use migrations to avoid enum conflicts
+  migrationsRun: true, // Always run migrations
   logging: configService.get('NODE_ENV') === 'development',
   ssl: configService.get('NODE_ENV') === 'production' ? { rejectUnauthorized: false } : false,
 });
