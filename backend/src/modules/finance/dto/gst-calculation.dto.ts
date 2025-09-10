@@ -159,3 +159,47 @@ export class GSTCalculationResultDto {
   })
   grandTotal: number;
 }
+
+// Additional DTOs for GST Controller
+export class ItemDto {
+  @ApiProperty({ description: 'Item description' })
+  @IsString()
+  description: string;
+
+  @ApiProperty({ description: 'Item quantity' })
+  @IsNumber()
+  quantity: number;
+
+  @ApiProperty({ description: 'Item rate' })
+  @IsNumber()
+  rate: number;
+
+  @ApiProperty({ description: 'Taxable amount' })
+  @IsNumber()
+  taxableAmount: number;
+
+  @ApiProperty({ description: 'GST rate percentage' })
+  @IsNumber()
+  gstRate: number;
+}
+
+export class GstCalculationDto {
+  @ApiProperty({ description: 'Items for GST calculation', type: [ItemDto] })
+  @ValidateNested({ each: true })
+  @Type(() => ItemDto)
+  items: ItemDto[];
+
+  @ApiPropertyOptional({ description: 'Bill to GSTIN' })
+  @IsOptional()
+  @IsString()
+  billToGSTIN?: string;
+
+  @ApiPropertyOptional({ description: 'Ship to GSTIN' })
+  @IsOptional()
+  @IsString()
+  shipToGSTIN?: string;
+
+  @ApiProperty({ description: 'Transaction type', enum: ['supply', 'import', 'export', 'exempt'] })
+  @IsString()
+  transactionType: string;
+}

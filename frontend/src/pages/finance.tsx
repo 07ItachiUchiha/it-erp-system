@@ -5,8 +5,12 @@ import InvoiceManagement from '../components/invoices/InvoiceManagement';
 import ExpenseManagement from '../components/expenses/ExpenseManagement';
 import BillManagement from '../components/bills/BillManagement';
 import FinancialOverview from '../components/finance/FinancialOverview';
+import AdvancedInvoiceManagement from '../components/finance/AdvancedInvoiceManagement';
+import GSTManagement from '../components/finance/GSTManagement';
+import ExportManagement from '../components/finance/ExportManagement';
+import PrintManagement from '../components/finance/PrintManagement';
 
-type FinanceTab = 'overview' | 'invoices' | 'expenses' | 'bills';
+type FinanceTab = 'overview' | 'invoices' | 'advanced-invoices' | 'gst' | 'exports' | 'prints' | 'expenses' | 'bills';
 
 const FinancePage: React.FC = () => {
   return (
@@ -22,10 +26,14 @@ const FinanceContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<FinanceTab>('overview');
 
   const tabs = [
-    { id: 'overview' as FinanceTab, label: 'Overview', icon: '' },
-    { id: 'invoices' as FinanceTab, label: 'Invoices', icon: '' },
-    { id: 'expenses' as FinanceTab, label: 'Expenses', icon: '' },
-    { id: 'bills' as FinanceTab, label: 'Bills', icon: '' }
+    { id: 'overview' as FinanceTab, label: 'Overview' },
+    { id: 'invoices' as FinanceTab, label: 'Basic Invoices' },
+    { id: 'advanced-invoices' as FinanceTab, label: 'Advanced Invoices' },
+    { id: 'gst' as FinanceTab, label: 'GST Management' },
+    { id: 'exports' as FinanceTab, label: 'Export System' },
+    { id: 'prints' as FinanceTab, label: 'Print Templates' },
+    { id: 'expenses' as FinanceTab, label: 'Expenses' },
+    { id: 'bills' as FinanceTab, label: 'Bills' }
   ];
 
   const renderTabContent = () => {
@@ -34,6 +42,14 @@ const FinanceContent: React.FC = () => {
         return <FinancialOverview onNavigateToTab={setActiveTab} />;
       case 'invoices':
         return <InvoiceManagement />;
+      case 'advanced-invoices':
+        return <AdvancedInvoiceManagement />;
+      case 'gst':
+        return <GSTManagement />;
+      case 'exports':
+        return <ExportManagement />;
+      case 'prints':
+        return <PrintManagement />;
       case 'expenses':
         return <ExpenseManagement />;
       case 'bills':
@@ -63,7 +79,6 @@ const FinanceContent: React.FC = () => {
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              <span>{tab.icon}</span>
               <span>{tab.label}</span>
             </button>
           ))}

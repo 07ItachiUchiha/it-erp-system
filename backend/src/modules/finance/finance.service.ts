@@ -1,10 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Invoice, Expense } from './entities/bill.entity';
-import { CreateInvoiceDto, CreateExpenseDto } from './dto/create-finance.dto';
-import { GSTCalculationService } from './services/gst-calculation.service';
-import { CustomerAddressService } from './services/customer-address.service';
+import { Repository, Like } from 'typeorm';
+import { Invoice, Expense } from './entities/finance.entity';
 
 @Injectable()
 export class FinanceService {
@@ -13,223 +10,77 @@ export class FinanceService {
     private readonly invoiceRepository: Repository<Invoice>,
     @InjectRepository(Expense)
     private readonly expenseRepository: Repository<Expense>,
-    private readonly gstCalculationService: GSTCalculationService,
-    private readonly customerAddressService: CustomerAddressService,
   ) {}
 
-  // Enhanced Invoice operations
-  async createInvoice(createInvoiceDto: CreateInvoiceDto): Promise<Invoice> {
+  // ==============================
+  // INVOICE MANAGEMENT (Unified)
+  // ==============================
+
+  async createInvoice(createInvoiceDto: any): Promise<Invoice> {
     // Generate invoice number if not provided
     let invoiceNumber = createInvoiceDto.invoiceNumber;
     if (!invoiceNumber) {
-      invoiceNumber = this.gstCalculationService.generateInvoiceNumber();
-      // Ensure uniqueness
-      const exists = await this.invoiceRepository.findOne({
-        where: { generatedInvoiceNumber: invoiceNumber }
-      });
-      if (exists) {
-        invoiceNumber = this.gstCalculationService.generateInvoiceNumber();
-      }
+      const count = await this.invoiceRepository.count();
+      invoiceNumber = `INV-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, '0')}`;
     }
 
-    // Calculate subtotal from items
-    const subtotal = createInvoiceDto.items.reduce((sum, item) => sum + item.amount, 0);
-
-    // Handle ship-to address
-    let shipToAddress = createInvoiceDto.shipTo?.address;
-    if (createInvoiceDto.shipTo?.useCustomerAddress && createInvoiceDto.shipTo?.customerAddressId) {
-      const customerAddress = await this.customerAddressService.getAddressById(
-        createInvoiceDto.shipTo.customerAddressId
-      );
-      shipToAddress = `${customerAddress.address}, ${customerAddress.city}, ${customerAddress.state} ${customerAddress.pincode}`;
-    }
-
-    // Calculate GST if tax is not optional
-    let gstBreakup = null;
-    let calculatedTotal = subtotal + (createInvoiceDto.shippingCharges || 0);
-
-    if (createInvoiceDto.taxSettings.isTaxOptional) {
-      if (createInvoiceDto.taxSettings.isManualOverride && createInvoiceDto.taxSettings.gstBreakup) {
-        // Manual override
-        gstBreakup = createInvoiceDto.taxSettings.gstBreakup;
-        const totalTax = gstBreakup.cgst + gstBreakup.sgst + gstBreakup.igst + (gstBreakup.utgst || 0);
-        calculatedTotal += totalTax;
-      } else {
-        // Auto-calculate GST
-        const billToState = this.extractStateFromAddress(createInvoiceDto.billTo.address);
-        const shipToState = shipToAddress ? this.extractStateFromAddress(shipToAddress) : billToState;
-        
-        const gstResult = this.gstCalculationService.calculateGST({
-          billToState,
-          shipToState,
-          subtotal,
-          shippingCharges: createInvoiceDto.shippingCharges || 0,
-          taxRate: createInvoiceDto.taxSettings.taxRate
-        });
-        
-        gstBreakup = gstResult.gstBreakup;
-        calculatedTotal = gstResult.grandTotal;
-      }
+    // Calculate finalAmount if not provided
+    let finalAmount = createInvoiceDto.finalAmount;
+    if (!finalAmount) {
+      const amount = createInvoiceDto.amount || 0;
+      const tax = createInvoiceDto.tax || 0;
+      const discount = createInvoiceDto.discount || 0;
+      finalAmount = amount + tax - discount;
     }
 
     const invoice = this.invoiceRepository.create({
-      invoiceNumber: createInvoiceDto.invoiceNumber || `LEGACY-${Date.now()}`,
-      generatedInvoiceNumber: invoiceNumber,
-      clientName: createInvoiceDto.clientName,
-      billToName: createInvoiceDto.billTo.name,
-      billToAddress: createInvoiceDto.billTo.address,
-      billToGSTIN: createInvoiceDto.billTo.gstin,
-      shipToAddress,
-      subtotal,
-      shippingCharges: createInvoiceDto.shippingCharges || 0,
-      taxRate: createInvoiceDto.taxSettings.taxRate,
-      isTaxOptional: createInvoiceDto.taxSettings.isTaxOptional,
-      gstBreakup,
-      calculatedTotal,
-      amount: createInvoiceDto.amount || calculatedTotal, // For backward compatibility
-      dueDate: createInvoiceDto.dueDate,
-      status: createInvoiceDto.status || 'draft',
-      // GST override audit fields
-      gstOverriddenBy: createInvoiceDto.taxSettings.isManualOverride ? 'current-user-id' : null, // TODO: Get from JWT token
-      gstOverrideReason: createInvoiceDto.taxSettings.overrideReason,
-      gstOverriddenAt: createInvoiceDto.taxSettings.isManualOverride ? new Date() : null,
+      ...createInvoiceDto,
+      invoiceNumber,
+      finalAmount,
     });
 
-    return await this.invoiceRepository.save(invoice);
+    const savedInvoice = await this.invoiceRepository.save(invoice);
+    return Array.isArray(savedInvoice) ? savedInvoice[0] : savedInvoice;
   }
 
-  async findAllInvoices(): Promise<Invoice[]> {
-    return await this.invoiceRepository.find({
-      order: { createdAt: 'DESC' },
-    });
-  }
+  async findAllInvoices(page = 1, limit = 10, search?: string, status?: string): Promise<{
+    data: Invoice[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    const queryBuilder = this.invoiceRepository.createQueryBuilder('invoice');
 
-  async updateInvoiceStatus(id: string, status: string): Promise<Invoice> {
-    const invoice = await this.invoiceRepository.findOne({ where: { id } });
-    if (!invoice) {
-      throw new NotFoundException(`Invoice with ID ${id} not found`);
+    if (search) {
+      queryBuilder.andWhere(
+        '(invoice.invoiceNumber ILIKE :search OR invoice.clientName ILIKE :search OR invoice.description ILIKE :search)',
+        { search: `%${search}%` }
+      );
     }
-    invoice.status = status;
-    return await this.invoiceRepository.save(invoice);
-  }
 
-  async removeInvoice(id: string): Promise<void> {
-    const result = await this.invoiceRepository.delete(id);
-    if (result.affected === 0) {
-      throw new NotFoundException(`Invoice with ID ${id} not found`);
+    if (status) {
+      queryBuilder.andWhere('invoice.status = :status', { status });
     }
-  }
 
-  // Expense operations
-  async createExpense(createExpenseDto: CreateExpenseDto): Promise<Expense> {
-    const expense = this.expenseRepository.create(createExpenseDto);
-    return await this.expenseRepository.save(expense);
-  }
+    queryBuilder.orderBy('invoice.createdAt', 'DESC');
 
-  async findAllExpenses(): Promise<Expense[]> {
-    return await this.expenseRepository.find({
-      order: { createdAt: 'DESC' },
-    });
-  }
-
-  async updateExpenseStatus(id: string, status: string): Promise<Expense> {
-    const expense = await this.expenseRepository.findOne({ where: { id } });
-    if (!expense) {
-      throw new NotFoundException(`Expense with ID ${id} not found`);
-    }
-    expense.status = status;
-    return await this.expenseRepository.save(expense);
-  }
-
-  async removeExpense(id: string): Promise<void> {
-    const result = await this.expenseRepository.delete(id);
-    if (result.affected === 0) {
-      throw new NotFoundException(`Expense with ID ${id} not found`);
-    }
-  }
-
-  // Analytics
-  async getFinancialSummary(): Promise<any> {
-    const totalRevenue = await this.invoiceRepository
-      .createQueryBuilder('invoice')
-      .select('SUM(COALESCE(invoice.calculatedTotal, invoice.amount))', 'total')
-      .getRawOne();
-
-    const totalExpenses = await this.expenseRepository
-      .createQueryBuilder('expense')
-      .select('SUM(expense.amount)', 'total')
-      .getRawOne();
-
-    const paidInvoices = await this.invoiceRepository
-      .createQueryBuilder('invoice')
-      .where('invoice.status = :status', { status: 'paid' })
-      .select('SUM(COALESCE(invoice.calculatedTotal, invoice.amount))', 'total')
-      .getRawOne();
-
-    // Enhanced analytics for GST
-    const gstSummary = await this.invoiceRepository
-      .createQueryBuilder('invoice')
-      .select([
-        'SUM((invoice.gstBreakup->>\'cgst\')::numeric) as totalCGST',
-        'SUM((invoice.gstBreakup->>\'sgst\')::numeric) as totalSGST',
-        'SUM((invoice.gstBreakup->>\'igst\')::numeric) as totalIGST',
-        'COUNT(*) FILTER (WHERE invoice.isTaxOptional = false) as taxableInvoices',
-        'COUNT(*) FILTER (WHERE invoice.gstOverriddenBy IS NOT NULL) as overriddenInvoices'
-      ])
-      .getRawOne();
+    const total = await queryBuilder.getCount();
+    const data = await queryBuilder
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getMany();
 
     return {
-      totalRevenue: parseFloat(totalRevenue.total) || 0,
-      totalExpenses: parseFloat(totalExpenses.total) || 0,
-      paidRevenue: parseFloat(paidInvoices.total) || 0,
-      netProfit: (parseFloat(paidInvoices.total) || 0) - (parseFloat(totalExpenses.total) || 0),
-      // Enhanced GST analytics
-      gstSummary: {
-        totalCGST: parseFloat(gstSummary.totalcgst) || 0,
-        totalSGST: parseFloat(gstSummary.totalsgst) || 0,
-        totalIGST: parseFloat(gstSummary.totaligst) || 0,
-        taxableInvoices: parseInt(gstSummary.taxableinvoices) || 0,
-        overriddenInvoices: parseInt(gstSummary.overriddeninvoices) || 0,
-      }
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
     };
   }
 
-  /**
-   * Extract state name from address string
-   * This is a simple implementation - could be enhanced with better parsing
-   */
-  private extractStateFromAddress(address: string): string {
-    // Common Indian state patterns
-    const statePatterns = [
-      'Maharashtra', 'Gujarat', 'Karnataka', 'Tamil Nadu', 'Kerala', 'Andhra Pradesh',
-      'Telangana', 'Rajasthan', 'Uttar Pradesh', 'Madhya Pradesh', 'West Bengal',
-      'Bihar', 'Odisha', 'Punjab', 'Haryana', 'Jharkhand', 'Assam', 'Uttarakhand',
-      'Himachal Pradesh', 'Goa', 'Manipur', 'Meghalaya', 'Tripura', 'Mizoram',
-      'Arunachal Pradesh', 'Nagaland', 'Sikkim', 'Chhattisgarh', 'Delhi'
-    ];
-
-    const addressUpper = address.toUpperCase();
-    
-    for (const state of statePatterns) {
-      if (addressUpper.includes(state.toUpperCase())) {
-        return state;
-      }
-    }
-
-    // Default fallback - extract last word before pincode
-    const parts = address.split(',').map(part => part.trim());
-    if (parts.length >= 2) {
-      const lastPart = parts[parts.length - 2]; // Assume state is second last part
-      return lastPart;
-    }
-
-    return 'Unknown';
-  }
-
-  /**
-   * Get invoice with enhanced details
-   */
-  async getInvoiceById(id: string): Promise<Invoice> {
+  async findInvoiceById(id: string): Promise<Invoice> {
     const invoice = await this.invoiceRepository.findOne({ where: { id } });
     if (!invoice) {
       throw new NotFoundException(`Invoice with ID ${id} not found`);
@@ -237,33 +88,332 @@ export class FinanceService {
     return invoice;
   }
 
-  /**
-   * Update invoice with enhanced validation
-   */
-  async updateInvoice(id: string, updateData: Partial<CreateInvoiceDto>): Promise<Invoice> {
-    const invoice = await this.getInvoiceById(id);
+  async updateInvoice(id: string, updateInvoiceDto: any): Promise<Invoice> {
+    const invoice = await this.findInvoiceById(id);
+
+    // Recalculate finalAmount if amount, tax, or discount changes
+    if (updateInvoiceDto.amount !== undefined || 
+        updateInvoiceDto.tax !== undefined || 
+        updateInvoiceDto.discount !== undefined) {
+      const amount = updateInvoiceDto.amount !== undefined ? updateInvoiceDto.amount : invoice.amount;
+      const tax = updateInvoiceDto.tax !== undefined ? updateInvoiceDto.tax : invoice.tax;
+      const discount = updateInvoiceDto.discount !== undefined ? updateInvoiceDto.discount : invoice.discount;
+      updateInvoiceDto.finalAmount = amount + tax - discount;
+    }
+
+    Object.assign(invoice, updateInvoiceDto);
+    const savedInvoice = await this.invoiceRepository.save(invoice);
+    return Array.isArray(savedInvoice) ? savedInvoice[0] : savedInvoice;
+  }
+
+  async deleteInvoice(id: string): Promise<void> {
+    const result = await this.invoiceRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Invoice with ID ${id} not found`);
+    }
+  }
+
+  async bulkUpdateInvoices(invoiceIds: string[], updateData: any): Promise<{ updated: number }> {
+    const result = await this.invoiceRepository.update(invoiceIds, updateData);
+    return { updated: result.affected || 0 };
+  }
+
+  async bulkDeleteInvoices(invoiceIds: string[]): Promise<{ deleted: number }> {
+    const result = await this.invoiceRepository.delete(invoiceIds);
+    return { deleted: result.affected || 0 };
+  }
+
+  async duplicateInvoice(id: string): Promise<Invoice> {
+    const originalInvoice = await this.findInvoiceById(id);
+    const count = await this.invoiceRepository.count();
+    const newInvoiceNumber = `INV-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, '0')}`;
+
+    const { id: _, createdAt, updatedAt, ...invoiceData } = originalInvoice;
     
-    // If GST settings are being updated, recalculate
-    if (updateData.taxSettings) {
-      // Recalculate GST and totals
-      const subtotal = invoice.subtotal;
-      const shippingCharges = updateData.shippingCharges || invoice.shippingCharges;
+    const duplicatedInvoice = this.invoiceRepository.create({
+      ...invoiceData,
+      invoiceNumber: newInvoiceNumber,
+      status: 'draft',
+    });
+
+    return await this.invoiceRepository.save(duplicatedInvoice);
+  }
+
+  async getInvoiceStatistics(): Promise<any> {
+    const [
+      total,
+      sent,
+      paid,
+      overdue,
+      draft,
+      totalRevenue,
+      monthlyRevenue
+    ] = await Promise.all([
+      this.invoiceRepository.count(),
+      this.invoiceRepository.count({ where: { status: 'sent' } }),
+      this.invoiceRepository.count({ where: { status: 'paid' } }),
+      this.invoiceRepository.count({ where: { status: 'overdue' } }),
+      this.invoiceRepository.count({ where: { status: 'draft' } }),
+      this.invoiceRepository.createQueryBuilder('invoice')
+        .select('SUM(invoice.finalAmount)', 'total')
+        .where('invoice.status = :status', { status: 'paid' })
+        .getRawOne(),
+      this.invoiceRepository.createQueryBuilder('invoice')
+        .select('SUM(invoice.finalAmount)', 'total')
+        .where('invoice.status = :status AND invoice.createdAt >= :startDate', {
+          status: 'paid',
+          startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+        })
+        .getRawOne()
+    ]);
+
+    return {
+      totalInvoices: total,
+      sentInvoices: sent,
+      paidInvoices: paid,
+      overdueInvoices: overdue,
+      draftInvoices: draft,
+      totalRevenue: parseFloat(totalRevenue?.total || '0'),
+      monthlyRevenue: parseFloat(monthlyRevenue?.total || '0'),
+    };
+  }
+
+  // ==============================
+  // EXPENSE MANAGEMENT
+  // ==============================
+
+  async createExpense(createExpenseDto: any): Promise<Expense> {
+    const expense = this.expenseRepository.create(createExpenseDto);
+    const savedExpense = await this.expenseRepository.save(expense);
+    return Array.isArray(savedExpense) ? savedExpense[0] : savedExpense;
+  }
+
+  async findAllExpenses(page = 1, limit = 10, search?: string, category?: string): Promise<{
+    data: Expense[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    const queryBuilder = this.expenseRepository.createQueryBuilder('expense');
+
+    if (search) {
+      queryBuilder.andWhere(
+        '(expense.description ILIKE :search OR expense.vendor ILIKE :search)',
+        { search: `%${search}%` }
+      );
+    }
+
+    if (category) {
+      queryBuilder.andWhere('expense.category = :category', { category });
+    }
+
+    queryBuilder.orderBy('expense.createdAt', 'DESC');
+
+    const total = await queryBuilder.getCount();
+    const data = await queryBuilder
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getMany();
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async findExpenseById(id: string): Promise<Expense> {
+    const expense = await this.expenseRepository.findOne({ where: { id } });
+    if (!expense) {
+      throw new NotFoundException(`Expense with ID ${id} not found`);
+    }
+    return expense;
+  }
+
+  async updateExpense(id: string, updateExpenseDto: any): Promise<Expense> {
+    const expense = await this.findExpenseById(id);
+    Object.assign(expense, updateExpenseDto);
+    const savedExpense = await this.expenseRepository.save(expense);
+    return Array.isArray(savedExpense) ? savedExpense[0] : savedExpense;
+  }
+
+  async deleteExpense(id: string): Promise<void> {
+    const result = await this.expenseRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Expense with ID ${id} not found`);
+    }
+  }
+
+  async getExpenseStatistics(): Promise<any> {
+    const [
+      total,
+      pending,
+      approved,
+      rejected,
+      totalAmount,
+      monthlyAmount,
+      categorySummary
+    ] = await Promise.all([
+      this.expenseRepository.count(),
+      this.expenseRepository.count({ where: { status: 'pending' } }),
+      this.expenseRepository.count({ where: { status: 'approved' } }),
+      this.expenseRepository.count({ where: { status: 'rejected' } }),
+      this.expenseRepository.createQueryBuilder('expense')
+        .select('SUM(expense.amount)', 'total')
+        .where('expense.status = :status', { status: 'approved' })
+        .getRawOne(),
+      this.expenseRepository.createQueryBuilder('expense')
+        .select('SUM(expense.amount)', 'total')
+        .where('expense.status = :status AND expense.createdAt >= :startDate', {
+          status: 'approved',
+          startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+        })
+        .getRawOne(),
+      this.expenseRepository.createQueryBuilder('expense')
+        .select('expense.category', 'category')
+        .addSelect('SUM(expense.amount)', 'total')
+        .addSelect('COUNT(*)', 'count')
+        .where('expense.status = :status', { status: 'approved' })
+        .groupBy('expense.category')
+        .getRawMany()
+    ]);
+
+    return {
+      totalExpenses: total,
+      pendingExpenses: pending,
+      approvedExpenses: approved,
+      rejectedExpenses: rejected,
+      totalAmount: parseFloat(totalAmount?.total || '0'),
+      monthlyAmount: parseFloat(monthlyAmount?.total || '0'),
+      categorySummary: categorySummary.map(item => ({
+        category: item.category,
+        total: parseFloat(item.total),
+        count: parseInt(item.count)
+      })),
+    };
+  }
+
+  // ==============================
+  // GST MANAGEMENT
+  // ==============================
+
+  async calculateGST(calculationData: {
+    amount: number;
+    gstRate: number;
+    calculationType: 'inclusive' | 'exclusive';
+    place: string;
+    businessType: 'b2b' | 'b2c' | 'export';
+  }): Promise<any> {
+    const { amount, gstRate, calculationType, place, businessType } = calculationData;
+    
+    let cgst = 0, sgst = 0, igst = 0, totalAmount = 0, taxableAmount = 0;
+
+    if (calculationType === 'inclusive') {
+      taxableAmount = amount / (1 + gstRate / 100);
+      const totalGst = amount - taxableAmount;
       
-      if (updateData.taxSettings.isTaxOptional) {
-        if (updateData.taxSettings.isManualOverride && updateData.taxSettings.gstBreakup) {
-          invoice.gstBreakup = updateData.taxSettings.gstBreakup;
-          const totalTax = invoice.gstBreakup.cgst + invoice.gstBreakup.sgst + invoice.gstBreakup.igst + (invoice.gstBreakup.utgst || 0);
-          invoice.calculatedTotal = subtotal + shippingCharges + totalTax;
-          
-          // Update override audit fields
-          invoice.gstOverriddenBy = 'current-user-id'; // TODO: Get from JWT token
-          invoice.gstOverrideReason = updateData.taxSettings.overrideReason;
-          invoice.gstOverriddenAt = new Date();
+      if (businessType === 'export') {
+        // No GST for exports
+        cgst = sgst = igst = 0;
+        totalAmount = taxableAmount;
+      } else {
+        // For interstate transactions
+        if (place.toLowerCase() !== 'karnataka') {
+          igst = totalGst;
+        } else {
+          cgst = totalGst / 2;
+          sgst = totalGst / 2;
         }
+        totalAmount = amount;
+      }
+    } else {
+      taxableAmount = amount;
+      const totalGst = (amount * gstRate) / 100;
+      
+      if (businessType === 'export') {
+        cgst = sgst = igst = 0;
+        totalAmount = taxableAmount;
+      } else {
+        if (place.toLowerCase() !== 'karnataka') {
+          igst = totalGst;
+        } else {
+          cgst = totalGst / 2;
+          sgst = totalGst / 2;
+        }
+        totalAmount = taxableAmount + totalGst;
       }
     }
 
-    Object.assign(invoice, updateData);
-    return await this.invoiceRepository.save(invoice);
+    return {
+      taxableAmount: Math.round(taxableAmount * 100) / 100,
+      cgst: Math.round(cgst * 100) / 100,
+      sgst: Math.round(sgst * 100) / 100,
+      igst: Math.round(igst * 100) / 100,
+      totalGst: Math.round((cgst + sgst + igst) * 100) / 100,
+      totalAmount: Math.round(totalAmount * 100) / 100,
+      gstRate,
+      calculationType,
+      place,
+      businessType,
+    };
+  }
+
+  // ==============================
+  // DASHBOARD & ANALYTICS
+  // ==============================
+
+  async getDashboardStats(): Promise<any> {
+    const [invoiceStats, expenseStats] = await Promise.all([
+      this.getInvoiceStatistics(),
+      this.getExpenseStatistics(),
+    ]);
+
+    return {
+      ...invoiceStats,
+      ...expenseStats,
+      netIncome: invoiceStats.totalRevenue - expenseStats.totalAmount,
+      monthlyNetIncome: invoiceStats.monthlyRevenue - expenseStats.monthlyAmount,
+    };
+  }
+
+  async getRecentActivities(limit = 10): Promise<any[]> {
+    const [recentInvoices, recentExpenses] = await Promise.all([
+      this.invoiceRepository.find({
+        order: { createdAt: 'DESC' },
+        take: limit,
+        select: ['id', 'invoiceNumber', 'clientName', 'amount', 'status', 'createdAt']
+      }),
+      this.expenseRepository.find({
+        order: { createdAt: 'DESC' },
+        take: limit,
+        select: ['id', 'description', 'amount', 'category', 'status', 'createdAt']
+      }),
+    ]);
+
+    const activities = [
+      ...recentInvoices.map(invoice => ({
+        id: invoice.id,
+        type: 'invoice',
+        title: `Invoice ${invoice.invoiceNumber}`,
+        description: `${invoice.clientName} - ₹${invoice.amount}`,
+        status: invoice.status,
+        createdAt: invoice.createdAt,
+      })),
+      ...recentExpenses.map(expense => ({
+        id: expense.id,
+        type: 'expense',
+        title: expense.description,
+        description: `${expense.category} - ₹${expense.amount}`,
+        status: expense.status,
+        createdAt: expense.createdAt,
+      })),
+    ];
+
+    return activities
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, limit);
   }
 }

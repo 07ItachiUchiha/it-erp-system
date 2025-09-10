@@ -120,7 +120,7 @@ class FinanceService {
   async getAllInvoices(): Promise<Invoice[]> {
     try {
       const response = await apiClient.get(`${this.baseUrl}/invoices`);
-      return response.data || [];
+      return response.data?.data || [];
     } catch (error) {
       console.error('Error fetching invoices:', error);
       return [];
@@ -160,7 +160,7 @@ class FinanceService {
   async getAllExpenses(): Promise<Expense[]> {
     try {
       const response = await apiClient.get(`${this.baseUrl}/expenses`);
-      return response.data || [];
+      return response.data?.data || [];
     } catch (error) {
       console.error('Error fetching expenses:', error);
       return [];

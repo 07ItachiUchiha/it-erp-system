@@ -209,10 +209,13 @@ export class CreateSettingsTables1709876543210 implements MigrationInterface {
       }),
     );
 
-    // Create system_settings table
-    await queryRunner.createTable(
-      new Table({
-        name: 'system_settings',
+    // Create system_settings table (check if exists first)
+    const systemSettingsExists = await queryRunner.hasTable('system_settings');
+    
+    if (!systemSettingsExists) {
+      await queryRunner.createTable(
+        new Table({
+          name: 'system_settings',
         columns: [
           {
             name: 'id',
@@ -274,6 +277,7 @@ export class CreateSettingsTables1709876543210 implements MigrationInterface {
         ],
       }),
     );
+    }
 
     // Add foreign key for user_settings -> users
     await queryRunner.createForeignKey(

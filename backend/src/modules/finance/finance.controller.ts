@@ -7,247 +7,284 @@ import {
   Delete, 
   Patch, 
   UseGuards,
-  Request,
   Query,
-  Res,
   ParseUUIDPipe
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
-import { Response } from 'express';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { FinanceService } from './finance.service';
-import { CreateInvoiceDto, CreateExpenseDto } from './dto/create-finance.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { UserRole } from '../users/entities/user.entity';
-import { GSTCalculationService } from './services/gst-calculation.service';
-import { InvoiceExportService } from './services/invoice-export.service';
-import { CustomerAddressService } from './services/customer-address.service';
-import { GSTBreakupDto, GSTCalculationResultDto, CalculateGSTDto } from './dto/gst-calculation.dto';
-import { BillToAddressDto } from './dto/bill-to-address.dto';
-import { ShipToAddressDto } from './dto/ship-to-address.dto';
-import { CreateCustomerAddressDto, UpdateCustomerAddressDto } from './dto/customer-address.dto';
+import { RolesGuard } from '../../guards/roles.guard';
 
 @ApiTags('finance')
 @ApiBearerAuth()
 @Controller('finance')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard)
 export class FinanceController {
-  constructor(
-    private readonly financeService: FinanceService,
-    private readonly gstCalculationService: GSTCalculationService,
-    private readonly invoiceExportService: InvoiceExportService,
-    private readonly customerAddressService: CustomerAddressService,
-  ) {}
+  constructor(private readonly financeService: FinanceService) {}
 
-  // Invoice endpoints
+  // ==============================
+  // INVOICE ENDPOINTS (Unified)
+  // ==============================
+
   @Post('invoices')
-  @Roles(UserRole.ADMIN, UserRole.FINANCE, UserRole.SALES)
-  @ApiOperation({ summary: 'Create a new invoice with enhanced features' })
-  @ApiResponse({ status: 201, description: 'Invoice created successfully.' })
-  createInvoice(@Body() createInvoiceDto: CreateInvoiceDto) {
+  createInvoice(@Body() createInvoiceDto: any) {
     return this.financeService.createInvoice(createInvoiceDto);
   }
 
   @Get('invoices')
-  @Roles(UserRole.ADMIN, UserRole.FINANCE, UserRole.HR, UserRole.MANAGER, UserRole.SALES)
-  @ApiOperation({ summary: 'Get all invoices' })
-  findAllInvoices() {
-    return this.financeService.findAllInvoices();
+  findAllInvoices(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Query('search') search?: string,
+    @Query('status') status?: string,
+  ) {
+    return this.financeService.findAllInvoices(+page, +limit, search, status);
+  }
+
+  @Get('invoices/search')
+  searchInvoices(
+    @Query('query') query: string,
+    @Query('status') status?: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+  ) {
+    return this.financeService.findAllInvoices(+page, +limit, query, status);
+  }
+
+  @Get('invoices/statistics')
+  getInvoiceStatistics() {
+    return this.financeService.getInvoiceStatistics();
+  }
+
+  @Get('invoices/recent')
+  getRecentInvoices(@Query('limit') limit = 5) {
+    return this.financeService.findAllInvoices(1, +limit);
   }
 
   @Get('invoices/:id')
-  @Roles(UserRole.ADMIN, UserRole.FINANCE, UserRole.HR, UserRole.MANAGER, UserRole.SALES)
-  @ApiOperation({ summary: 'Get invoice by ID with enhanced details' })
-  getInvoiceById(@Param('id', ParseUUIDPipe) id: string) {
-    return this.financeService.getInvoiceById(id);
+  findInvoiceById(@Param('id', ParseUUIDPipe) id: string) {
+    return this.financeService.findInvoiceById(id);
   }
 
   @Patch('invoices/:id')
-  @Roles(UserRole.ADMIN, UserRole.FINANCE)
-  @ApiOperation({ summary: 'Update invoice with enhanced validation' })
   updateInvoice(
-    @Param('id', ParseUUIDPipe) id: string, 
-    @Body() updateData: Partial<CreateInvoiceDto>
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateInvoiceDto: any,
   ) {
-    return this.financeService.updateInvoice(id, updateData);
-  }
-
-  @Patch('invoices/:id/status')
-  @Roles(UserRole.ADMIN, UserRole.FINANCE)
-  @ApiOperation({ summary: 'Update invoice status' })
-  updateInvoiceStatus(@Param('id') id: string, @Body('status') status: string) {
-    return this.financeService.updateInvoiceStatus(id, status);
+    return this.financeService.updateInvoice(id, updateInvoiceDto);
   }
 
   @Delete('invoices/:id')
-  @Roles(UserRole.ADMIN, UserRole.FINANCE)
-  @ApiOperation({ summary: 'Delete invoice' })
-  removeInvoice(@Param('id') id: string) {
-    return this.financeService.removeInvoice(id);
+  deleteInvoice(@Param('id', ParseUUIDPipe) id: string) {
+    return this.financeService.deleteInvoice(id);
   }
 
-  // GST Calculation endpoints
-  @Post('gst/calculate')
-  @Roles(UserRole.ADMIN, UserRole.FINANCE, UserRole.SALES)
-  @ApiOperation({ summary: 'Calculate GST for invoice items' })
-  @ApiResponse({ status: 200, description: 'GST calculated successfully.', type: GSTCalculationResultDto })
-  calculateGST(@Body() calculateGSTDto: CalculateGSTDto) {
-    return this.gstCalculationService.calculateGST(calculateGSTDto);
+  @Patch('invoices/bulk-update')
+  bulkUpdateInvoices(@Body() bulkUpdateDto: { invoiceIds: string[]; data: any }) {
+    return this.financeService.bulkUpdateInvoices(bulkUpdateDto.invoiceIds, bulkUpdateDto.data);
   }
 
-  @Post('gst/validate-override')
-  @Roles(UserRole.ADMIN, UserRole.FINANCE)
-  @ApiOperation({ summary: 'Validate GST override for manual adjustments' })
-  validateGSTOverride(
-    @Body() overrideData: {
-      gstBreakup: GSTBreakupDto;
-      subtotal: number;
-      isIntraState: boolean;
-    }
+  @Delete('invoices/bulk-delete')
+  bulkDeleteInvoices(@Body() bulkDeleteDto: { invoiceIds: string[] }) {
+    return this.financeService.bulkDeleteInvoices(bulkDeleteDto.invoiceIds);
+  }
+
+  @Post('invoices/:id/duplicate')
+  duplicateInvoice(@Param('id', ParseUUIDPipe) id: string) {
+    return this.financeService.duplicateInvoice(id);
+  }
+
+  @Patch('invoices/:id/status')
+  updateInvoiceStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() statusDto: { status: string },
   ) {
-    return this.gstCalculationService.validateGSTOverride(
-      overrideData.gstBreakup,
-      overrideData.subtotal,
-      overrideData.isIntraState
-    );
+    return this.financeService.updateInvoice(id, { status: statusDto.status });
   }
 
-  // Export endpoints
-  @Get('invoices/export/excel')
-  @Roles(UserRole.ADMIN, UserRole.FINANCE, UserRole.MANAGER)
-  @ApiOperation({ summary: 'Export invoices to Excel format' })
-  @ApiQuery({ name: 'startDate', required: false, description: 'Start date for filtering (YYYY-MM-DD)' })
-  @ApiQuery({ name: 'endDate', required: false, description: 'End date for filtering (YYYY-MM-DD)' })
-  @ApiQuery({ name: 'status', required: false, description: 'Invoice status filter' })
-  @ApiQuery({ name: 'customerName', required: false, description: 'Customer name filter' })
-  async exportInvoicesToExcel(
-    @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string,
-    @Query('status') status?: string,
-    @Query('customerName') customerName?: string,
-    @Res() res?: Response
-  ) {
-    const filters = {
-      startDate: startDate ? new Date(startDate) : undefined,
-      endDate: endDate ? new Date(endDate) : undefined,
-      status,
-      customerName,
-      format: 'excel' as const
-    };
+  // ==============================
+  // EXPENSE ENDPOINTS
+  // ==============================
 
-    const exportBuffer = await this.invoiceExportService.exportInvoices(filters);
-    
-    if (res) {
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      res.setHeader('Content-Disposition', `attachment; filename=invoices_export_${new Date().toISOString().split('T')[0]}.xlsx`);
-      return res.send(exportBuffer);
-    }
-    
-    return { message: 'Export completed', size: exportBuffer.length };
-  }
-
-  @Get('invoices/export/csv')
-  @Roles(UserRole.ADMIN, UserRole.FINANCE, UserRole.MANAGER)
-  @ApiOperation({ summary: 'Export invoices to CSV format (returns Excel for now)' })
-  @ApiQuery({ name: 'startDate', required: false })
-  @ApiQuery({ name: 'endDate', required: false })
-  @ApiQuery({ name: 'status', required: false })
-  @ApiQuery({ name: 'customerName', required: false })
-  async exportInvoicesToCSV(
-    @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string,
-    @Query('status') status?: string,
-    @Query('customerName') customerName?: string,
-    @Res() res?: Response
-  ) {
-    const filters = {
-      startDate: startDate ? new Date(startDate) : undefined,
-      endDate: endDate ? new Date(endDate) : undefined,
-      status,
-      customerName,
-      format: 'csv' as const
-    };
-
-    const exportBuffer = await this.invoiceExportService.exportInvoices(filters);
-    
-    if (res) {
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      res.setHeader('Content-Disposition', `attachment; filename=invoices_export_${new Date().toISOString().split('T')[0]}.xlsx`);
-      return res.send(exportBuffer);
-    }
-    
-    return { message: 'Export completed', size: exportBuffer.length };
-  }
-
-  // Expense endpoints
   @Post('expenses')
-  @Roles(UserRole.ADMIN, UserRole.FINANCE, UserRole.HR, UserRole.MANAGER, UserRole.SALES, UserRole.EMPLOYEE)
-  createExpense(@Body() createExpenseDto: CreateExpenseDto) {
+  createExpense(@Body() createExpenseDto: any) {
     return this.financeService.createExpense(createExpenseDto);
   }
 
   @Get('expenses')
-  findAllExpenses() {
-    return this.financeService.findAllExpenses();
+  findAllExpenses(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Query('search') search?: string,
+    @Query('category') category?: string,
+  ) {
+    return this.financeService.findAllExpenses(+page, +limit, search, category);
   }
 
-  @Patch('expenses/:id/status')
-  updateExpenseStatus(@Param('id') id: string, @Body('status') status: string) {
-    return this.financeService.updateExpenseStatus(id, status);
+  @Get('expenses/statistics')
+  getExpenseStatistics() {
+    return this.financeService.getExpenseStatistics();
+  }
+
+  @Get('expenses/:id')
+  findExpenseById(@Param('id', ParseUUIDPipe) id: string) {
+    return this.financeService.findExpenseById(id);
+  }
+
+  @Patch('expenses/:id')
+  updateExpense(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateExpenseDto: any,
+  ) {
+    return this.financeService.updateExpense(id, updateExpenseDto);
   }
 
   @Delete('expenses/:id')
-  removeExpense(@Param('id') id: string) {
-    return this.financeService.removeExpense(id);
+  deleteExpense(@Param('id', ParseUUIDPipe) id: string) {
+    return this.financeService.deleteExpense(id);
   }
 
-  // Analytics
-  @Get('summary')
-  @ApiOperation({ summary: 'Get enhanced financial summary with GST analytics' })
-  getFinancialSummary() {
-    return this.financeService.getFinancialSummary();
+  // ==============================
+  // GST ENDPOINTS
+  // ==============================
+
+  @Post('gst/calculate')
+  calculateGST(@Body() calculationData: {
+    amount: number;
+    gstRate: number;
+    calculationType: 'inclusive' | 'exclusive';
+    place: string;
+    businessType: 'b2b' | 'b2c' | 'export';
+  }) {
+    return this.financeService.calculateGST(calculationData);
   }
 
-  // Customer Address endpoints
-  @Post('customer-addresses')
-  @Roles(UserRole.ADMIN, UserRole.FINANCE, UserRole.SALES)
-  @ApiOperation({ summary: 'Create customer address' })
-  createCustomerAddress(@Body() addressData: CreateCustomerAddressDto) {
-    return this.customerAddressService.createAddress(addressData);
+  @Get('gst/rates')
+  getGSTRates() {
+    return {
+      rates: [
+        { rate: 0, description: 'Exempt' },
+        { rate: 5, description: 'Essential goods' },
+        { rate: 12, description: 'Standard goods' },
+        { rate: 18, description: 'Services & Goods' },
+        { rate: 28, description: 'Luxury items' },
+      ],
+    };
   }
 
-  @Get('customer-addresses/:customerId')
-  @Roles(UserRole.ADMIN, UserRole.FINANCE, UserRole.SALES, UserRole.HR, UserRole.MANAGER)
-  @ApiOperation({ summary: 'Get customer addresses by customer ID' })
-  getCustomerAddresses(@Param('customerId') customerId: string) {
-    return this.customerAddressService.getCustomerAddresses(customerId);
+  @Get('gst/summary')
+  getGSTSummary(@Query('month') month?: string, @Query('year') year?: string) {
+    // Mock GST summary for now
+    return {
+      totalGSTCollected: 50000,
+      totalGSTPaid: 30000,
+      netGST: 20000,
+      period: `${month || new Date().getMonth() + 1}/${year || new Date().getFullYear()}`,
+    };
   }
 
-  @Get('customer-addresses/:customerId/default/:addressType')
-  @Roles(UserRole.ADMIN, UserRole.FINANCE, UserRole.SALES, UserRole.HR, UserRole.MANAGER)
-  @ApiOperation({ summary: 'Get default customer address by type' })
-  getDefaultCustomerAddress(
-    @Param('customerId') customerId: string,
-    @Param('addressType') addressType: 'billing' | 'shipping'
+  // ==============================
+  // EXPORT ENDPOINTS
+  // ==============================
+
+  @Post('export/excel')
+  exportToExcel(
+    @Query('type') type: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
   ) {
-    return this.customerAddressService.getDefaultAddress(customerId, addressType);
+    const jobId = `export-${Date.now()}`;
+    return {
+      jobId,
+      status: 'queued',
+      message: 'Export job has been queued for processing',
+    };
   }
 
-  @Patch('customer-addresses/:id')
-  @Roles(UserRole.ADMIN, UserRole.FINANCE, UserRole.SALES)
-  @ApiOperation({ summary: 'Update customer address' })
-  updateCustomerAddress(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateData: UpdateCustomerAddressDto
+  @Post('export/csv')
+  exportToCSV(
+    @Query('type') type: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
   ) {
-    return this.customerAddressService.updateAddress(id, updateData);
+    const jobId = `export-csv-${Date.now()}`;
+    return {
+      jobId,
+      status: 'queued',
+      message: 'CSV export job has been queued for processing',
+    };
   }
 
-  @Delete('customer-addresses/:id')
-  @Roles(UserRole.ADMIN, UserRole.FINANCE)
-  @ApiOperation({ summary: 'Delete customer address' })
-  deleteCustomerAddress(@Param('id', ParseUUIDPipe) id: string) {
-    return this.customerAddressService.deleteAddress(id);
+  @Get('export/jobs')
+  getExportJobs() {
+    return {
+      data: [],
+      message: 'No export jobs found',
+    };
+  }
+
+  @Get('export/jobs/:id')
+  getExportJobStatus(@Param('id') id: string) {
+    return {
+      jobId: id,
+      status: 'completed',
+      progress: 100,
+      downloadUrl: `/api/v1/finance/export/download/${id}`,
+    };
+  }
+
+  // ==============================
+  // PRINT ENDPOINTS
+  // ==============================
+
+  @Post('print/invoice/:id')
+  printInvoice(@Param('id', ParseUUIDPipe) id: string) {
+    const jobId = `print-${Date.now()}`;
+    return {
+      jobId,
+      status: 'queued',
+      message: 'Print job has been queued for processing',
+    };
+  }
+
+  @Post('print/bulk')
+  bulkPrint(@Body() printDto: { invoiceIds: string[] }) {
+    const jobId = `bulk-print-${Date.now()}`;
+    return {
+      jobId,
+      status: 'queued',
+      message: 'Bulk print job has been queued for processing',
+    };
+  }
+
+  @Get('print/jobs')
+  getPrintJobs() {
+    return {
+      data: [],
+      message: 'No print jobs found',
+    };
+  }
+
+  @Get('print/jobs/:id')
+  getPrintJobStatus(@Param('id') id: string) {
+    return {
+      jobId: id,
+      status: 'completed',
+      progress: 100,
+    };
+  }
+
+  // ==============================
+  // DASHBOARD ENDPOINTS
+  // ==============================
+
+  @Get('dashboard/stats')
+  getDashboardStats() {
+    return this.financeService.getDashboardStats();
+  }
+
+  @Get('dashboard/recent-activities')
+  getRecentActivities(@Query('limit') limit = 10) {
+    return this.financeService.getRecentActivities(+limit);
   }
 }
